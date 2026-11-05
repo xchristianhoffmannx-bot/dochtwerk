@@ -11,6 +11,34 @@ export function h(tag, attrs, ...kids) {
   return el;
 }
 
+// Formularbausteine für die Rechner (Material-Formulare bauen ihre Felder selbst)
+export function textInput({ id, value = '', oninput, inputmode = 'decimal' }) {
+  const el = h('input', { class: 'input', id, type: 'text', autocomplete: 'off', inputmode, enterkeyhint: 'next' });
+  el.value = value;
+  if (oninput) el.addEventListener('input', () => oninput(el.value));
+  return el;
+}
+
+// options: [[wert, text]]; unbekannter Wert (z. B. gelöschtes Material) fällt auf den ersten Eintrag
+export function selectInput({ id, options, value, onchange }) {
+  const el = h('select', { class: 'input', id }, options.map(([v, t]) => h('option', { value: v }, t)));
+  el.value = options.some(([v]) => v === value) ? value : options[0][0];
+  el.addEventListener('change', () => onchange(el.value));
+  return el;
+}
+
+export const field = (label, control, ...extra) =>
+  h('div', { class: 'field' }, label && h('label', { for: control.id }, label), control, ...extra);
+
+export const fieldRow = (...fields) => h('div', { class: 'field-row' }, ...fields);
+
+export function switchInput({ id, label, checked, onchange }) {
+  const el = h('input', { type: 'checkbox', role: 'switch', id });
+  el.checked = checked;
+  el.addEventListener('change', () => onchange(el.checked));
+  return h('label', { class: 'switch', for: id }, h('span', {}, label), el);
+}
+
 // Bestätigungsdialog (<dialog>). Esc oder „Abbrechen“ -> false.
 export function confirmDialog({ title, text, ok = 'OK', cancel = 'Abbrechen', danger = false }) {
   return new Promise((resolve) => {

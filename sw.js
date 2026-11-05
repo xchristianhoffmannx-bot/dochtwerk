@@ -1,16 +1,19 @@
 // Cache-first, alles läuft offline.
 // WICHTIG: CACHE_VERSION bei JEDER Änderung an ausgelieferten Dateien hochzählen,
 // sonst zeigen installierte Kopien die alte Version. Neue Dateien auch in FILES eintragen.
-const CACHE_VERSION = 'dochtwerk-6';
+const CACHE_VERSION = 'dochtwerk-9';
 
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
   'css/tokens.css', 'css/base.css', 'css/components.css', 'fonts/gelasio-latin.woff',
   'icons/sprite.svg', 'icons/app-192.png', 'icons/app-512.png', 'icons/app-maskable-512.png',
   'js/main.js', 'js/router.js', 'js/texts.js', 'js/store.js', 'js/materials.js',
+  'js/calc-forms.js',
   'js/core/units.js', 'js/core/pricing.js', 'js/core/glass-volume.js', 'js/core/defaults.js', 'js/core/state.js',
-  'js/ui/components.js', 'js/ui/icons.js',
+  'js/core/calc-cost.js', 'js/core/calc-plan.js',
+  'js/ui/components.js', 'js/ui/icons.js', 'js/ui/calc-parts.js',
   'js/ui/screens/start.js', 'js/ui/screens/stub.js', 'js/ui/screens/material-list.js', 'js/ui/screens/material-detail.js',
+  'js/ui/screens/cost.js', 'js/ui/screens/cost-result.js', 'js/ui/screens/plan.js',
 ];
 
 self.addEventListener('install', (e) => {
