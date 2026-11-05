@@ -59,5 +59,19 @@ export async function loadStore() {
   return state;
 }
 
+// Fotos: Store "photos", Schlüssel = Foto-ID, Wert { blob, thumb, width, height, createdAt }
+function photoTx(mode, fn) {
+  if (!db) return Promise.reject(new Error('Kein Speicher verfügbar'));
+  const tx = db.transaction('photos', mode);
+  const r = fn(tx.objectStore('photos'));
+  return new Promise((res, rej) => {
+    tx.oncomplete = () => res(r.result);
+    tx.onerror = tx.onabort = () => rej(tx.error);
+  });
+}
+export const putPhoto = (id, rec) => photoTx('readwrite', (s) => s.put(rec, id));
+export const getPhoto = (id) => photoTx('readonly', (s) => s.get(id));
+export const deletePhoto = (id) => photoTx('readwrite', (s) => s.delete(id));
+
 // Schutz vor dem Aufräumen durch den Browser (Spec 3.5); Ergebnis zeigt später #/daten
 export const requestPersist = () => navigator.storage?.persist?.().catch(() => false);

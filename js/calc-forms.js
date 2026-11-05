@@ -40,7 +40,7 @@ function scentsOf(state, d, errors) {
     const s = state.scents.find((x) => x.id === r.scentId);
     if (!s) return []; // Duft inzwischen gelöscht
     return [{
-      name: s.name, pricePerMl: pricePerMl(s.price, s.quantityMl), densityGml: s.densityGml,
+      scentId: s.id, name: s.name, pricePerMl: pricePerMl(s.price, s.quantityMl), densityGml: s.densityGml,
       sharePct: d.mode === 'ml' ? null : read(r.share, `Anteil ${s.name}`, errors),
       ml: d.mode === 'ml' ? read(r.ml, `Menge ${s.name}`, errors) : null,
     }];

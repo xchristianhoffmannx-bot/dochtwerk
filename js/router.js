@@ -14,7 +14,8 @@ export function parentOf(path) {
 export const currentPath = () => location.hash.slice(1) || '/';
 
 // routes: [[RegExp, (…Treffergruppen) => Element]]
-// Ein Screen darf element.guard = () => boolean setzen (true = ungespeicherte Änderungen).
+// Ein Screen darf element.guard = () => boolean setzen (true = ungespeicherte Änderungen)
+// und element.destroy = () => void (wird beim Verlassen aufgerufen).
 export function startRouter(routes, root) {
   let current = null;
   let lastHash = location.hash;
@@ -24,6 +25,7 @@ export function startRouter(routes, root) {
     for (const [re, screen] of routes) {
       const m = path.match(re);
       if (!m) continue;
+      current?.destroy?.(); // Screen räumt auf (Object-URLs, Tastatur-Handler)
       root.replaceChildren();
       if (path !== '/') {
         root.append(h('a', { class: 'back', href: `#${parentOf(path)}` }, icon('arrow-left'), T.back));

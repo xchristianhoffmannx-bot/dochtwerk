@@ -9,6 +9,9 @@ import materialDetail from './ui/screens/material-detail.js';
 import cost from './ui/screens/cost.js';
 import costResult from './ui/screens/cost-result.js';
 import plan from './ui/screens/plan.js';
+import gallery from './ui/screens/gallery.js';
+import slideshow from './ui/screens/slideshow.js';
+import candleDetail from './ui/screens/candle-detail.js';
 
 const ART = '(glaeser|waechse|duefte|sonstiges)';
 const routes = [
@@ -18,7 +21,9 @@ const routes = [
   [/^\/kosten$/, cost],
   [/^\/kosten\/ergebnis$/, costResult],
   [/^\/rechner$/, plan],
-  [/^\/galerie(?:\/.+)?$/, () => stub('galerie')],
+  [/^\/galerie$/, gallery],
+  [/^\/galerie\/diashow$/, slideshow], // vor /galerie/<id>
+  [/^\/galerie\/([^/]+)$/, candleDetail], // "neu" oder Kerzen-ID
   [/^\/export$/, () => stub('export')],
   [/^\/daten$/, () => stub('daten')],
 ];

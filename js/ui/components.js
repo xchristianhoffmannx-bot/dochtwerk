@@ -63,6 +63,29 @@ export function confirmDialog({ title, text, ok = 'OK', cancel = 'Abbrechen', da
   });
 }
 
+// Bottom-Sheet (<dialog>). actions: [{ label, value, primary?, danger? }]; Esc, Hintergrund -> null
+export function sheet({ title, body, actions }) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = (value) => {
+      if (settled) return;
+      settled = true;
+      d.close();
+      d.remove();
+      resolve(value);
+    };
+    const d = h('dialog', { class: 'sheet' },
+      title && h('h2', { class: 'dlg-title' }, title),
+      body,
+      h('div', { class: 'sheet-actions' }, actions.map((a) =>
+        h('button', { class: `btn ${a.primary ? 'btn-primary' : a.danger ? 'btn-danger' : 'btn-secondary'}`, type: 'button', onclick: () => done(a.value) }, a.label))));
+    d.addEventListener('cancel', (e) => { e.preventDefault(); done(null); });
+    d.addEventListener('click', (e) => { if (e.target === d) done(null); });
+    document.body.append(d);
+    d.showModal();
+  });
+}
+
 let toastEl = null, toastTimer = 0;
 export function toast(text) {
   if (!toastEl) {

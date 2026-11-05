@@ -1,6 +1,10 @@
-import { h, field, switchInput, textInput } from '../components.js';
+import { h, field, switchInput, textInput, toast } from '../components.js';
+import { icon } from '../icons.js';
 import { T } from '../../texts.js';
-import { getState, commit } from '../../store.js';
+import { getState, commit, putPhoto, requestPersist } from '../../store.js';
+import { pickImage, processFile } from '../../photos.js';
+import { askName } from '../sheets.js';
+import { snapshotCandle } from '../../candles.js';
 import { formatEuro, formatNumber, formatPct, parseDecimal } from '../../core/units.js';
 import { calcCost, rund05 } from '../../core/calc-cost.js';
 import { costInput } from '../../calc-forms.js';
@@ -76,11 +80,37 @@ export default function costResult() {
   });
   refresh();
 
+  // Speichern-Ablauf (Spec 6.5): Foto -> Name/Rolle -> Kerze mit Snapshot -> Galerie
+  async function save(withPhoto) {
+    let rec = null;
+    if (withPhoto) {
+      const file = await pickImage(true);
+      if (!file) return;
+      toast(T.photo.processing);
+      try { rec = await processFile(file); } catch { toast(T.photo.failed); return; }
+    }
+    const ask = await askName({ withPhoto });
+    if (!ask) return;
+    const candle = snapshotCandle({ state, draft: d, input, result: r, name: ask.name });
+    if (rec) {
+      const pid = crypto.randomUUID();
+      try { await putPhoto(pid, rec); } catch { toast(T.photo.saveFailed); return; }
+      candle.photos.push({ id: pid, role: ask.side ? 'side' : 'other', createdAt: rec.createdAt });
+      requestPersist();
+    }
+    commit(() => state.candles.push(candle));
+    toast(T.candle.saved);
+    location.hash = `#/galerie/${candle.id}`;
+  }
+
   return h('section', { class: 'screen' },
     h('h1', { class: 'screen-title' }, R.title),
     h('p', { class: 'subtitle' }, `${scentNames} im ${input.glass.name}.`),
     r.warnings.length > 0 && h('div', { class: 'stack' }, warnings(r.warnings)),
     card,
     metrics,
-    h('div', { class: 'markup' }, toggle, markupBody));
+    h('div', { class: 'markup' }, toggle, markupBody),
+    h('div', { class: 'save-actions' },
+      h('button', { class: 'btn btn-primary', type: 'button', onclick: () => save(true) }, icon('camera'), R.savePhoto),
+      h('button', { class: 'link', type: 'button', onclick: () => save(false) }, R.saveNoPhoto)));
 }
