@@ -1,0 +1,59 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.45 var(--font-sans);
+  min-height: 100vh;
+}
+
+h1, h2, h3, p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Kopf: scrollt mit, Inhalt maximal 480 px breit */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px var(--gutter);
+  border-bottom: 1px solid var(--border);
+}
+.brand-inner {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.brand .icon { width: 26px; height: 26px; color: var(--accent); flex: none; margin: 0 6px; }
+.brand-name { font: clamp(24px, 6.9vw, 30px)/1.1 var(--font-serif); }
+.brand-tag { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+.screen {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter) 40px;
+}
+
+/* Größen wachsen mit der Breite, damit „Was möchtest du machen?“ auf 360–412 px einzeilig bleibt */
+.screen-title { font: clamp(24px, 7.2vw, 32px)/1.15 var(--font-serif); margin-top: 8px; }
+.subtitle { color: var(--muted); margin-top: 10px; }
+
+.icon {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor;
+  stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.serif { font-family: var(--font-serif); font-weight: 400; }

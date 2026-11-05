@@ -1,0 +1,25 @@
+:root {
+  --bg: #faf7f2;
+  --surface: #fffefd;
+  --border: #e8dfe2;
+  --accent: #8c3158;
+  --accent-contrast: #ffffff;
+  --result-bg: #f3e4eb;
+  --ink: #332b33;
+  --muted: #756773;
+  --gallery-tint-1: #eee3df;
+  --gallery-tint-2: #e6e4ee;
+  --slideshow-bg: #1e1a1e;
+  --warn: #8a4b00;
+  --warn-bg: #fdf0dc;
+  --danger: #a4262c;
+
+  /* Gelasio kommt erst, wenn die Schriftdatei im Repo liegt (fonts/) */
+  --font-serif: 'Gelasio', Georgia, 'Times New Roman', serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --r-card: 18px;
+  --r-field: 14px;
+  --gutter: 22px;
+  --content-max: 480px;
+}

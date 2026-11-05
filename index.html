@@ -2,11 +2,28 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dochtwerk</title>
+<meta name="theme-color" content="#8c3158">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/app-192.png">
+<link rel="apple-touch-icon" href="icons/app-192.png">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
 </head>
-<body style="background:#faf7f2;color:#332b33;font-family:Georgia,serif;text-align:center;padding-top:30vh">
-<h1>Dochtwerk</h1>
-<p>Dein kleines Kerzenatelier.</p>
+<body>
+<header class="brand">
+  <div class="brand-inner">
+    <svg class="icon" aria-hidden="true"><use href="icons/sprite.svg#flame"/></svg>
+    <div>
+      <div class="brand-name">Dochtwerk</div>
+      <div class="brand-tag">Dein kleines Kerzenatelier.</div>
+    </div>
+  </div>
+</header>
+<main id="app"></main>
+<noscript>Dochtwerk braucht JavaScript.</noscript>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

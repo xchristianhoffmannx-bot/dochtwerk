@@ -1,0 +1,66 @@
+/* Zurück-Zeile: klebt oben (Spec 6, D10) */
+.back {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 8px var(--gutter);
+  background: var(--bg);
+  color: var(--muted);
+}
+.back .icon { width: 20px; height: 20px; }
+
+/* Kacheln */
+.tile {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 22px;
+}
+.tile-title { font-weight: 700; font-size: clamp(17px, 4.7vw, 20px); line-height: 1.25; margin-top: 16px; }
+.tile-desc { color: var(--muted); font-size: 14.5px; margin-top: 10px; line-height: 1.5; }
+.tile .icon { color: var(--accent); }
+
+.tile-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  aspect-ratio: 3 / 1;
+  padding: 26px;
+  margin-top: 26px;
+}
+.tile-hero .tile-title { font: 400 clamp(20px, 5.7vw, 25px)/1.2 var(--font-serif); margin: 0; }
+.tile-hero .tile-desc { color: var(--accent-contrast); margin-top: 12px; max-width: 24ch; }
+.tile-hero .icon { color: var(--accent-contrast); opacity: .9; }
+
+.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+.tile-grid .tile-title { margin-top: 18px; }
+
+.tile-wide { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; padding: 20px 22px; }
+.tile-wide .tile-title { margin-top: 12px; }
+.tile-wide .candle { flex: none; width: 76px; filter: drop-shadow(0 6px 7px rgba(60, 40, 30, .18)); }
+
+/* Listenzeile mit Chevron */
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.list-row .icon { color: var(--accent); flex: none; }
+.list-row .chev { margin-left: auto; width: 20px; height: 20px; }
+.list-row-title { font-size: 19px; line-height: 1.25; }
+.list-row-sub { color: var(--muted); font-size: 15px; margin-top: 2px; }
+.list { margin-top: 18px; }
+.list .list-row:first-child { margin-top: 0; }
