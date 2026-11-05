@@ -1,0 +1,119 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { calcCost } from '../js/core/calc-cost.js';
+import { calcPlan } from '../js/core/calc-plan.js';
+
+const near = (a, b, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
+const cent = (a, b) => assert.equal(Math.round(a * 100) / 100, b);
+
+const glass = { name: 'Dessertglas', emptyWeightG: 195, price: 1.8 };
+const wax = { name: 'Soja', pricePerKg: 13.36, densityGml: 0.9, fragranceMaxPct: 12 };
+const vanille = { name: 'Vanille', pricePerMl: 0.0318, densityGml: 0.95 };
+const karamell = { name: 'Karamell', pricePerMl: 0.04, densityGml: 1.0 };
+const extras = [
+  { name: 'Docht', qty: 1, pricePerPiece: 0.29 },
+  { name: 'Etikett', qty: 1, pricePerPiece: 0.3 },
+];
+const base = { glass, wax, totalWeightG: 465, extras };
+
+test('AB1 Mockup-Fall, Kostenrechner percent', () => {
+  const r = calcCost({ ...base, mode: 'percent', pct: 8, scents: [vanille], markup: { on: true, pct: 150 } });
+  assert.ok(r.ok);
+  near(r.innerG, 270);
+  near(r.waxG, 250);
+  near(r.scentG, 20);
+  near(r.scents[0].ml, 21.0526, 1e-4);
+  cent(r.costs.wax, 3.34); cent(r.costs.scent, 0.67); cent(r.costs.glass, 1.8); cent(r.costs.extras, 0.59);
+  near(r.costs.total, 6.399474, 1e-5);
+  assert.equal(r.price, 16);
+  assert.deepEqual(r.warnings, []);
+  assert.equal(r.incomplete, false);
+});
+
+test('AB2 Kostenrechner ml, zwei Düfte', () => {
+  const r = calcCost({ ...base, mode: 'ml', scents: [{ ...vanille, ml: 12 }, { ...karamell, ml: 8 }] });
+  assert.ok(r.ok);
+  near(r.scentG, 19.4); near(r.waxG, 250.6);
+  near(r.scentPct, 7.74, 5e-3);
+  near(r.scents[0].shareMassPct, 58.76, 5e-3); near(r.scents[1].shareMassPct, 41.24, 5e-3);
+  near(r.scents[0].shareVolPct, 60); near(r.scents[1].shareVolPct, 40);
+  cent(r.costs.wax, 3.35); cent(r.costs.scent, 0.7); cent(r.costs.total, 6.44);
+  assert.equal(r.price, null);
+});
+
+test('AB2b Kostenrechner percent, Mischung 60/40, 8 %', () => {
+  const r = calcCost({ ...base, mode: 'percent', pct: 8, scents: [vanille, { ...karamell, sharePct: 40 }] });
+  near(r.waxG, 250); near(r.scentG, 20);
+  near(r.scents[0].g, 12); near(r.scents[0].ml, 12.63, 5e-3);
+  near(r.scents[1].g, 8); near(r.scents[1].ml, 8);
+  cent(r.costs.scent, 0.72); cent(r.costs.total, 6.45);
+});
+
+test('Anteile der weiteren Düfte über 100 % werden normiert', () => {
+  const r = calcCost({ ...base, mode: 'percent', pct: 8, scents: [vanille, { ...karamell, sharePct: 80 }, { ...karamell, sharePct: 80 }] });
+  near(r.scents[0].shareMassPct, 0); near(r.scents[1].shareMassPct, 50);
+  assert.equal(r.warnings.length, 1);
+});
+
+test('AB3 Wachs & Duftrechner percent', () => {
+  const r = calcPlan({ wax, mode: 'percent', pct: 8, scents: [vanille], volumeMl: 250 });
+  near(r.waxG, 209.15, 5e-3); near(r.scentG, 16.73, 5e-3); near(r.scents[0].ml, 17.61, 5e-3);
+  near(r.waxG / 0.9 + r.scents[0].ml, 250, 5e-4); // Volumenprobe
+});
+
+test('AB3b percent, Mischung 60/40', () => {
+  const r = calcPlan({ wax, mode: 'percent', pct: 8, scents: [vanille, { ...karamell, sharePct: 40 }], volumeMl: 250 });
+  near(r.waxG, 209.44, 5e-3); near(r.scentG, 16.76, 5e-3);
+  near(r.scents[0].g, 10.05, 5e-3); near(r.scents[0].ml, 10.58, 5e-3);
+  near(r.scents[1].g, 6.7, 5e-3); near(r.scents[1].ml, 6.7, 5e-3);
+});
+
+test('AB4 Wachs & Duftrechner ml', () => {
+  const r = calcPlan({ wax, mode: 'ml', scents: [{ ...vanille, ml: 18 }], volumeMl: 250 });
+  near(r.waxG, 208.8, 5e-3); near(r.scentG, 17.1, 5e-3); near(r.scentPct, 8.19, 5e-3);
+});
+
+test('AB4b ml, zwei Düfte', () => {
+  const r = calcPlan({ wax, mode: 'ml', scents: [{ ...vanille, ml: 12 }, { ...karamell, ml: 8 }], volumeMl: 250 });
+  near(r.waxG, 207, 5e-3); near(r.scentG, 19.4, 5e-3); near(r.scentPct, 9.37, 5e-3);
+});
+
+test('AB6 Fehlerfälle Kostenrechner', () => {
+  const run = (o) => calcCost({ ...base, mode: 'percent', pct: 8, scents: [vanille], ...o });
+  assert.match(run({ totalWeightG: 195 }).errors[0], /nicht größer als das leere Glas \(195 g\)/);
+  assert.match(run({ totalWeightG: 100 }).errors[0], /nicht größer/);
+  assert.match(run({ glass: { ...glass, emptyWeightG: null } }).errors[0], /Leergewicht/);
+  assert.match(run({ glass: null }).errors[0], /Wähle ein Glas/);
+  assert.match(run({ wax: null }).errors[0], /Wähle ein Wachs/);
+  const ml = run({ mode: 'ml', scents: [{ ...vanille, ml: 300 }] });
+  assert.equal(ml.ok, false);
+  assert.match(ml.errors[0], /Duftöl wiegt mehr/);
+});
+
+test('AB6 Fehlender Preis: Ergebnis mit Warnung, Summe unvollständig', () => {
+  const r = calcCost({ ...base, wax: { ...wax, pricePerKg: null }, mode: 'percent', pct: 8, scents: [vanille] });
+  assert.ok(r.ok);
+  assert.equal(r.incomplete, true);
+  assert.ok(r.warnings.includes('Preis fehlt: Soja'));
+  cent(r.costs.wax, 0);
+});
+
+test('AB6 Duft-% über Maximum: Warnung (auch abgeleitet im ml-Modus)', () => {
+  const r = calcCost({ ...base, mode: 'percent', pct: 13, scents: [vanille] });
+  assert.ok(r.ok);
+  assert.match(r.warnings[0], /Duftöl 13 % liegt über dem Maximum von 12 % für Soja/);
+  const m = calcCost({ ...base, mode: 'ml', scents: [{ ...vanille, ml: 40 }] });
+  assert.match(m.warnings[0], /über dem Maximum/);
+});
+
+test('AB6 V_Öl >= V im Wachs & Duftrechner: Fehler', () => {
+  const r = calcPlan({ wax, mode: 'ml', scents: [{ ...vanille, ml: 250 }], volumeMl: 250 });
+  assert.equal(r.ok, false);
+  assert.match(r.errors[0], /größer als das Zielvolumen/);
+});
+
+test('Kein Duft: erlaubt, Duftkosten 0', () => {
+  const r = calcCost({ ...base, mode: 'percent', pct: 8, scents: [] });
+  assert.ok(r.ok);
+  near(r.waxG, 270); near(r.costs.scent, 0);
+});
