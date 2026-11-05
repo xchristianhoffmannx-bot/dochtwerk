@@ -12,11 +12,31 @@ export const T = {
     export: { title: 'Kerzen exportieren', desc: 'Seitenansichten & Angaben als ZIP' },
     data: { title: 'Sichern & Hinweise', desc: 'Daten sichern, Merkzettel' },
   },
+  material: {
+    title: 'Materialien & Zubehör',
+    sub: 'Deine Grundlagen. Einmal hinterlegt.',
+    tabsLabel: 'Materialart',
+    priceMissing: 'Preis fehlt',
+    save: 'Speichern',
+    remove: 'Löschen',
+    saved: 'Gespeichert',
+    removed: 'Gelöscht',
+    discard: { title: 'Änderungen verwerfen?', text: 'Deine Eingaben sind noch nicht gespeichert.', ok: 'Verwerfen', cancel: 'Weiter bearbeiten' },
+    confirmRemove: (name) => ({ title: 'Wirklich löschen?', text: `„${name}“ wird gelöscht. Gespeicherte Kerzen bleiben unverändert.`, ok: 'Löschen', cancel: 'Abbrechen' }),
+    arts: {
+      glaeser: { tab: 'Gläser', add: 'Glas hinzufügen', empty: 'Noch keine Gläser angelegt.', newTitle: 'Neues Glas', editTitle: 'Glas bearbeiten' },
+      waechse: { tab: 'Wachse', add: 'Wachs hinzufügen', empty: 'Noch keine Wachse angelegt.', newTitle: 'Neues Wachs', editTitle: 'Wachs bearbeiten' },
+      duefte: { tab: 'Düfte', add: 'Duft hinzufügen', empty: 'Noch keine Düfte angelegt.', newTitle: 'Neuer Duft', editTitle: 'Duft bearbeiten' },
+      sonstiges: { tab: 'Sonstiges', add: 'Posten hinzufügen', empty: 'Noch kein Zubehör angelegt (zum Beispiel Docht oder Etikett).', newTitle: 'Neuer Posten', editTitle: 'Posten bearbeiten' },
+    },
+  },
+  saveFailed: 'Speichern fehlgeschlagen. Sichere deine Daten.',
+  saveFailedLink: 'Zu „Sichern & Hinweise“',
   // Screen-Titel für Routen, die noch keinen eigenen Screen haben
   stub: {
     soon: 'Dieser Bereich folgt in einer der nächsten Etappen.',
     titles: {
-      material: 'Materialien & Zubehör', kosten: 'Kosten berechnen', rechner: 'Wachs & Duftrechner',
+      kosten: 'Kosten berechnen', rechner: 'Wachs & Duftrechner',
       galerie: 'Meine Galerie', export: 'Kerzen exportieren', daten: 'Sichern & Hinweise',
     },
   },

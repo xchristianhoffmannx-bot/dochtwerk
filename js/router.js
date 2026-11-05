@@ -1,5 +1,5 @@
 // Hash-Router. Die Zurück-Schaltfläche führt zum logischen Elternscreen, nicht per history.back().
-import { h } from './ui/components.js';
+import { h, confirmDialog } from './ui/components.js';
 import { icon } from './ui/icons.js';
 import { T } from './texts.js';
 
@@ -14,7 +14,11 @@ export function parentOf(path) {
 export const currentPath = () => location.hash.slice(1) || '/';
 
 // routes: [[RegExp, (…Treffergruppen) => Element]]
+// Ein Screen darf element.guard = () => boolean setzen (true = ungespeicherte Änderungen).
 export function startRouter(routes, root) {
+  let current = null;
+  let lastHash = location.hash;
+
   const render = () => {
     const path = currentPath();
     for (const [re, screen] of routes) {
@@ -24,12 +28,26 @@ export function startRouter(routes, root) {
       if (path !== '/') {
         root.append(h('a', { class: 'back', href: `#${parentOf(path)}` }, icon('arrow-left'), T.back));
       }
-      root.append(screen(...m.slice(1)));
+      current = screen(...m.slice(1));
+      root.append(current);
+      lastHash = location.hash;
       window.scrollTo(0, 0);
       return;
     }
     location.replace('#/'); // unbekannte Adresse -> Start
   };
-  addEventListener('hashchange', render);
+
+  addEventListener('hashchange', async () => {
+    if (current?.guard?.()) {
+      const target = location.hash;
+      history.replaceState(null, '', lastHash || '#/'); // alte Adresse wiederherstellen, löst kein hashchange aus
+      const { title, text, ok, cancel } = T.material.discard;
+      if (!(await confirmDialog({ title, text, ok, cancel }))) return;
+      current.guard = null;
+      location.hash = target;
+      return;
+    }
+    render();
+  });
   render();
 }
