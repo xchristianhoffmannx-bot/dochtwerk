@@ -1,3 +1,11 @@
+/* Gelasio (SIL OFL, Lizenz in fonts/OFL.txt), Latin-Subset, Schnitt 400 */
+@font-face {
+  font-family: 'Gelasio';
+  src: url('../fonts/gelasio-latin.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }

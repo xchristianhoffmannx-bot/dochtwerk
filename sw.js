@@ -1,11 +1,11 @@
 // Cache-first, alles läuft offline.
 // WICHTIG: CACHE_VERSION bei JEDER Änderung an ausgelieferten Dateien hochzählen,
 // sonst zeigen installierte Kopien die alte Version. Neue Dateien auch in FILES eintragen.
-const CACHE_VERSION = 'dochtwerk-1';
+const CACHE_VERSION = 'dochtwerk-2';
 
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/tokens.css', 'css/base.css', 'css/components.css',
+  'css/tokens.css', 'css/base.css', 'css/components.css', 'fonts/gelasio-latin.woff',
   'icons/sprite.svg', 'icons/app-192.png', 'icons/app-512.png', 'icons/app-maskable-512.png',
   'js/main.js', 'js/router.js', 'js/texts.js',
   'js/ui/components.js', 'js/ui/icons.js', 'js/ui/screens/start.js', 'js/ui/screens/stub.js',
