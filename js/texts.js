@@ -156,6 +156,7 @@ export const T = {
     manualHint: 'Von Hand angelegt: es werden keine Kosten berechnet.',
   },
   slideshow: { label: 'Diashow', close: 'Schließen', empty: 'Noch keine Fotos.' },
+  update: { text: 'Neue Version verfügbar.', button: 'Neu laden' },
   saveFailed: 'Speichern fehlgeschlagen. Sichere deine Daten.',
   saveFailedLink: 'Zu „Sichern & Hinweise“',
   export: {

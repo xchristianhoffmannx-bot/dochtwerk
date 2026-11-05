@@ -1,7 +1,7 @@
 // Cache-first, alles läuft offline.
 // WICHTIG: CACHE_VERSION bei JEDER Änderung an ausgelieferten Dateien hochzählen,
 // sonst zeigen installierte Kopien die alte Version. Neue Dateien auch in FILES eintragen.
-const CACHE_VERSION = 'dochtwerk-13';
+const CACHE_VERSION = 'dochtwerk-17';
 
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
@@ -20,6 +20,8 @@ const FILES = [
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_VERSION).then((c) => c.addAll(FILES)));
 });
+
+self.addEventListener('message', (e) => { if (e.data === 'skipWaiting') self.skipWaiting(); });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(

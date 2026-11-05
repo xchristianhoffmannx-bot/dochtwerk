@@ -40,4 +40,23 @@ await loadStore();
 requestPersist();
 startRouter(routes, document.getElementById('app'));
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// Neue Version: Hinweis mit Button; erst nach Klick wird sie aktiv (nie mitten in einer Eingabe)
+if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  const offer = (worker) => {
+    const bar = h('div', { class: 'banner banner-info', role: 'status' }, T.update.text + ' ',
+      h('button', { class: 'link', type: 'button', onclick: () => worker.postMessage('skipWaiting') }, T.update.button));
+    document.getElementById('banner').after(bar);
+  };
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    if (reg.waiting && hadController) offer(reg.waiting);
+    reg.addEventListener('updatefound', () => {
+      const w = reg.installing;
+      w?.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) offer(w); });
+    });
+  }).catch(() => {});
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !reloading) { reloading = true; location.reload(); }
+  });
+}
