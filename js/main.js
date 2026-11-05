@@ -3,7 +3,8 @@ import { h } from './ui/components.js';
 import { T } from './texts.js';
 import { loadStore, onSaveError, requestPersist } from './store.js';
 import start from './ui/screens/start.js';
-import stub from './ui/screens/stub.js';
+import exportScreen from './ui/screens/export.js';
+import data from './ui/screens/data.js';
 import materialList from './ui/screens/material-list.js';
 import materialDetail from './ui/screens/material-detail.js';
 import cost from './ui/screens/cost.js';
@@ -24,8 +25,8 @@ const routes = [
   [/^\/galerie$/, gallery],
   [/^\/galerie\/diashow$/, slideshow], // vor /galerie/<id>
   [/^\/galerie\/([^/]+)$/, candleDetail], // "neu" oder Kerzen-ID
-  [/^\/export$/, () => stub('export')],
-  [/^\/daten$/, () => stub('daten')],
+  [/^\/export$/, exportScreen],
+  [/^\/daten$/, data],
 ];
 
 // Dauerhafter Hinweis, wenn Speichern nicht klappt (Quota, privater Modus)

@@ -73,5 +73,13 @@ export const putPhoto = (id, rec) => photoTx('readwrite', (s) => s.put(rec, id))
 export const getPhoto = (id) => photoTx('readonly', (s) => s.get(id));
 export const deletePhoto = (id) => photoTx('readwrite', (s) => s.delete(id));
 
+export const clearPhotos = () => photoTx('readwrite', (s) => s.clear());
+
+// Wiederherstellen: Objekt bleibt dasselbe (Screens halten Referenzen), Inhalt wird ersetzt
+export function replaceState(next) {
+  commit((s) => { for (const k of Object.keys(s)) delete s[k]; Object.assign(s, next); });
+  flush();
+}
+
 // Schutz vor dem Aufräumen durch den Browser (Spec 3.5); Ergebnis zeigt später #/daten
 export const requestPersist = () => navigator.storage?.persist?.().catch(() => false);

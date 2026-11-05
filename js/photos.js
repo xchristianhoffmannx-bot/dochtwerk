@@ -29,12 +29,33 @@ export async function processFile(file) {
   }
 }
 
+// Beim Wiederherstellen: gespeichertes Hauptfoto unverändert lassen, nur das Thumbnail neu erzeugen
+export async function rebuildRecord(blob, createdAt) {
+  const bmp = await createImageBitmap(blob);
+  try {
+    const thumb = await render(bmp, 400, 0.8);
+    return { blob, thumb: thumb.blob, width: bmp.width, height: bmp.height, createdAt };
+  } finally {
+    bmp.close?.();
+  }
+}
+
+// Datei zum Speichern anbieten
+export function download(bytes, name, type = 'application/zip') {
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 // Kamera (capture) oder Galerie des Handys. Löst mit null auf, wenn nichts gewählt wurde.
-export function pickImage(camera) {
+export function pickImage(camera, accept = 'image/*') {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = accept;
     if (camera) input.capture = 'environment';
     input.addEventListener('change', () => resolve(input.files[0] || null));
     input.addEventListener('cancel', () => resolve(null));

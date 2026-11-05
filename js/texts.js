@@ -1,3 +1,5 @@
+export const APP_VERSION = '1.0.0';
+
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
   brand: { name: 'Dochtwerk', tagline: 'Dein kleines Kerzenatelier.' },
@@ -156,11 +158,53 @@ export const T = {
   slideshow: { label: 'Diashow', close: 'Schließen', empty: 'Noch keine Fotos.' },
   saveFailed: 'Speichern fehlgeschlagen. Sichere deine Daten.',
   saveFailedLink: 'Zu „Sichern & Hinweise“',
-  // Screen-Titel für Routen, die noch keinen eigenen Screen haben
-  stub: {
-    soon: 'Dieser Bereich folgt in einer der nächsten Etappen.',
-    titles: {
-      export: 'Kerzen exportieren', daten: 'Sichern & Hinweise',
-    },
+  export: {
+    title: 'Kerzen exportieren',
+    sub: 'Wähle die Kerzen für dein ZIP-Paket.',
+    ready: 'Mit Seitenansicht',
+    readySub: 'Seitenfoto und Kerzenangaben',
+    incomplete: 'Noch unvollständig',
+    complete: 'Ergänzen',
+    selectAll: 'Alle auswählen',
+    selectNone: 'Alle abwählen',
+    note: 'Das Paket enthält die gewählten Seitenfotos und die vorhandenen Angaben zu jeder Kerze.',
+    button: 'ZIP exportieren',
+    empty: 'Noch keine Kerzen in der Galerie.',
+    emptyLink: 'Zur Galerie',
+    done: (name) => `Exportiert: ${name}`,
+    failed: 'Export fehlgeschlagen.',
+  },
+  data: {
+    title: 'Sichern & Hinweise',
+    sub: 'Alle Daten liegen nur auf diesem Gerät.',
+    backupTitle: 'Daten sichern',
+    backupText: 'Erzeugt ein ZIP mit allen Daten und Fotos.',
+    backup: 'Daten sichern',
+    backupDone: (name) => `Gesichert: ${name}`,
+    backupFailed: 'Sicherung fehlgeschlagen.',
+    restoreTitle: 'Wiederherstellen',
+    restore: 'Sicherung wählen',
+    restoreConfirm: { title: 'Alle aktuellen Daten durch die Sicherung ersetzen?', text: 'Das lässt sich nicht rückgängig machen.', ok: 'Ersetzen', cancel: 'Abbrechen' },
+    restored: (k, f) => `Wiederhergestellt: ${k} ${k === 1 ? 'Kerze' : 'Kerzen'}, ${f} ${f === 1 ? 'Foto' : 'Fotos'}`,
+    invalid: 'Diese Datei ist keine gültige Sicherung.',
+    storageTitle: 'Speicher',
+    persisted: (yes) => `Dauerhaft geschützt: ${yes ? 'ja' : 'nein'}`,
+    usage: (used, quota) => `Belegt: ${used} von ${quota}`,
+    persistWarn: 'Der Browser darf Daten bei Platzmangel löschen. Sichere deshalb regelmäßig.',
+    unknown: 'Speicherstatus nicht verfügbar.',
+    notesTitle: 'Merkzettel zum Verkauf',
+    notesWarn: 'Aus deinem NotebookLM-Material, nicht rechtlich geprüft. Vor dem Verkauf selbst klären, keine Rechtsberatung.',
+    notes: [
+      'Keine Lebensmittel-Optik: Dessertkerzen dürfen nicht mit echtem Essen verwechselbar sein (GPSR, § 5 LFGB). „Nicht essbar“ als Aufkleber allein reicht laut Quelle nicht.',
+      'Lose Deko (Beeren, Kekse) nicht kleiner als 3,17 cm (Erstickungsschutzkegel).',
+      'Warnhinweise nach DIN EN 15494: nie unbeaufsichtigt brennen lassen, außer Reichweite von Kindern und Tieren, Abstand zu Brennbarem.',
+      'Duftöl: Allergene, Piktogramme, Signalwort, H-/P-Sätze auf dem Etikett; bei gefährlichen Gemischen UFI-Code und Meldung.',
+      'Auf Produkt oder Verpackung: Name, Postanschrift und E-Mail, Chargennummer, Nettogewicht.',
+      'Dokumentation: interne Risikoanalyse aufbewahren.',
+      'Tassen/Geschirr als Behälter: gegebenenfalls zusätzliche Anzeigepflicht (BedGgstV).',
+      'Steuern/Gewerbe beim Verkauf auf dem Markt klären.',
+    ],
+    aboutTitle: 'Über Dochtwerk',
+    version: (v) => `Version ${v}`,
   },
 };
