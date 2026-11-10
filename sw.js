@@ -1,7 +1,7 @@
 // Cache-first, alles läuft offline.
 // WICHTIG: CACHE_VERSION bei JEDER Änderung an ausgelieferten Dateien hochzählen,
 // sonst zeigen installierte Kopien die alte Version. Neue Dateien auch in FILES eintragen.
-const CACHE_VERSION = 'dochtwerk-18';
+const CACHE_VERSION = 'dochtwerk-19';
 
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',

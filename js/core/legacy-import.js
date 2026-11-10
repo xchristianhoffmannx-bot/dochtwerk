@@ -9,24 +9,25 @@ const key = (s) => String(s ?? '').trim().toLowerCase();
 
 export const isLegacy = (j) => !!j && typeof j === 'object' && Array.isArray(j.vessels) && Array.isArray(j.waxes) && Array.isArray(j.oils);
 
+// Nur der Name ist Pflicht. Fehlende Maße/Gewicht bleiben leer und werden im Dochtwerk ergänzt (ältere Gefäße hatten oft nur Maße).
 function glass(v) {
-  const h = pos(v.h), weight = pos(v.weight);
+  if (!String(v.name ?? '').trim()) return null;
   const rect = v.shape === 'rect';
-  const w = pos(rect ? v.w : v.d), l = pos(v.l);
-  if (!String(v.name ?? '').trim() || !h || !w || !weight || (rect && !l)) return null; // unvollständig, nur ml bekannt o. Ä.
+  const h = pos(v.h), w = pos(rect ? v.w : v.d), l = pos(v.l);
+  // alt: Innenmaße; neu: Außenmaße + Wand, damit die Volumenschätzung gleich bleibt
+  const outer = (cm, extra) => (cm ? cm * 10 + extra : null);
   return {
     name: String(v.name).trim(), manufacturer: null, shape: rect ? 'rect' : 'round',
-    // alt: Innenmaße; neu: Außenmaße + Wand, damit die Volumenschätzung gleich bleibt
-    heightMm: h * 10 + WALL, widthMm: w * 10 + 2 * WALL,
-    diameterTopMm: null, diameterBottomMm: null, depthMm: rect ? l * 10 + 2 * WALL : null,
-    wallMm: WALL, emptyWeightG: weight, priceMode: 'piece', price: n(v.price), packQty: 1,
+    heightMm: outer(h, WALL), widthMm: outer(w, 2 * WALL),
+    diameterTopMm: null, diameterBottomMm: null, depthMm: rect ? outer(l, 2 * WALL) : null,
+    wallMm: WALL, emptyWeightG: pos(v.weight), priceMode: 'piece', price: n(v.price), packQty: 1,
   };
 }
 
 // Übernimmt in state (innerhalb von commit aufrufen). Vorhandene Wachse/Düfte gleichen Namens werden nur ergänzt.
 // Gläser mit gleichem Namen werden nicht doppelt angelegt. Ergebnis: Zähler.
 export function mergeLegacy(legacy, state, newId = () => crypto.randomUUID()) {
-  const r = { glasses: 0, waxes: 0, scents: 0, updated: 0, skipped: 0 };
+  const r = { glasses: 0, waxes: 0, scents: 0, updated: 0, skipped: 0, incomplete: 0 };
 
   for (const v of legacy.vessels) {
     const g = glass(v);
@@ -34,6 +35,7 @@ export function mergeLegacy(legacy, state, newId = () => crypto.randomUUID()) {
     if (state.glasses.some((x) => key(x.name) === key(g.name))) { r.skipped++; continue; }
     state.glasses.push({ id: newId(), ...g });
     r.glasses++;
+    if (!g.heightMm || !g.widthMm || !g.emptyWeightG || (g.shape === 'rect' && !g.depthMm)) r.incomplete++;
   }
 
   for (const w of legacy.waxes) {

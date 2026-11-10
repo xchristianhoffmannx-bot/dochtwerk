@@ -23,7 +23,7 @@ test('Altes Zubehör wird übernommen, Volumen bleibt gleich', () => {
   const s = newState();
   const ids = (() => { let i = 0; return () => `id${i++}`; })();
   const r = mergeLegacy(legacy, s, ids);
-  assert.deepEqual(r, { glasses: 2, waxes: 1, scents: 1, updated: 1, skipped: 1 });
+  assert.deepEqual(r, { glasses: 3, waxes: 1, scents: 1, updated: 1, skipped: 0, incomplete: 1 });
   const weck = s.glasses[0];
   assert.equal(weck.emptyWeightG, 210);
   assert.equal(weck.price, 1.8);
@@ -41,4 +41,5 @@ test('zweiter Import legt nichts doppelt an', () => {
   mergeLegacy(legacy, s);
   const again = mergeLegacy(legacy, s);
   assert.equal(again.glasses + again.waxes + again.scents + again.updated, 0);
+  assert.equal(again.incomplete, 0);
 });

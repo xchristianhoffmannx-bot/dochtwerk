@@ -97,9 +97,10 @@ export function subline(art, i) {
   const parts = [];
   let price = null, unit = '', digits = 2;
   if (art === 'glaeser') {
-    const w = formatNumber(i.widthMm, 1), h = formatNumber(i.heightMm, 1);
-    if (i.shape === 'rect' && i.depthMm) parts.push(`${w} × ${formatNumber(i.depthMm, 1)} × ${h} mm`);
-    else parts.push(`${i.shape === 'round' || i.shape === 'conical' ? 'Ø ' : ''}${w} × ${h} mm`);
+    const f = (v) => formatNumber(v, 1);
+    if (!i.widthMm || !i.heightMm) parts.push('Maße fehlen');
+    else if (i.shape === 'rect' && i.depthMm) parts.push(`${f(i.widthMm)} × ${f(i.depthMm)} × ${f(i.heightMm)} mm`);
+    else parts.push(`${i.shape === 'round' || i.shape === 'conical' ? 'Ø ' : ''}${f(i.widthMm)} × ${f(i.heightMm)} mm`);
     price = perPiece(i); unit = 'Stück';
   } else if (art === 'waechse') { price = pricePerKg(i.price, i.quantityKg); unit = 'kg'; }
   else if (art === 'duefte') { price = pricePerMl(i.price, i.quantityMl); unit = 'ml'; digits = 4; }

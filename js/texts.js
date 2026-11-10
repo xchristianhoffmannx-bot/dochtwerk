@@ -192,7 +192,7 @@ export const T = {
     legacyText: 'Im alten Kalkulator unter ⓘ „Sichern“ tippen und die Datei hier wählen. Gefäße, Wachse und Duftöle werden übernommen; schon vorhandenes bleibt unverändert.',
     legacy: 'Alte Sicherung wählen',
     legacyInvalid: 'Das ist keine Sicherung des alten Kerzenkalkulators.',
-    legacyDone: (r) => `Übernommen: ${r.glasses} Gläser, ${r.waxes + r.updated} Wachse, ${r.scents} Düfte${r.skipped ? ` (${r.skipped} übersprungen: schon vorhanden oder unvollständig)` : ''}`,
+    legacyDone: (r) => `Übernommen: ${r.glasses} ${r.glasses === 1 ? 'Glas' : 'Gläser'}, ${r.waxes + r.updated} Wachse, ${r.scents} Düfte${r.skipped ? ` (${r.skipped} schon vorhanden)` : ''}${r.incomplete ? `. ${r.incomplete} ${r.incomplete === 1 ? 'Glas ist' : 'Gläser sind'} unvollständig: Maße oder Leergewicht unter „Materialien“ ergänzen.` : ''}`,
     storageTitle: 'Speicher',
     persisted: (yes) => `Dauerhaft geschützt: ${yes ? 'ja' : 'nein'}`,
     usage: (used, quota) => `Belegt: ${used} von ${quota}`,
