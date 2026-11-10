@@ -2,7 +2,8 @@
 import { h, confirmDialog, toast } from '../components.js';
 import { icon } from '../icons.js';
 import { T, APP_VERSION } from '../../texts.js';
-import { getState, getPhoto, putPhoto, clearPhotos, replaceState, requestPersist } from '../../store.js';
+import { mergeLegacy, isLegacy } from '../../core/legacy-import.js';
+import { getState, commit, getPhoto, putPhoto, clearPhotos, replaceState, requestPersist } from '../../store.js';
 import { download, pickImage, rebuildRecord } from '../../photos.js';
 import { buildBackupZip, parseBackup, dateStamp } from '../../core/backup.js';
 import { formatNumber } from '../../core/units.js';
@@ -43,6 +44,17 @@ export default function data() {
     } catch { say(D.invalid, 'error'); }
   }
 
+  async function legacy() {
+    const file = await pickImage(false, '.json,application/json');
+    if (!file) return;
+    let json;
+    try { json = JSON.parse(await file.text()); } catch { json = null; }
+    if (!isLegacy(json)) { say(D.legacyInvalid, 'error'); return; }
+    let r;
+    commit((s) => { r = mergeLegacy(json, s); });
+    say(D.legacyDone(r));
+  }
+
   const storage = h('div', { 'aria-live': 'polite' });
   (async () => {
     const s = navigator.storage;
@@ -65,6 +77,9 @@ export default function data() {
     h('button', { class: 'btn btn-primary', type: 'button', onclick: backup }, icon('folder-down'), D.backup),
     h('h2', { class: 'field-label' }, D.restoreTitle),
     h('button', { class: 'btn btn-secondary', type: 'button', onclick: restore }, D.restore),
+    h('h2', { class: 'field-label' }, D.legacyTitle),
+    h('p', { class: 'hint' }, D.legacyText),
+    h('button', { class: 'btn btn-secondary', type: 'button', onclick: legacy }, D.legacy),
     h('h2', { class: 'field-label' }, D.storageTitle),
     storage,
     h('h2', { class: 'field-label' }, D.notesTitle),

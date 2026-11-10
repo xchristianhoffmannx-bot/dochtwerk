@@ -1,7 +1,7 @@
 // Cache-first, alles läuft offline.
 // WICHTIG: CACHE_VERSION bei JEDER Änderung an ausgelieferten Dateien hochzählen,
 // sonst zeigen installierte Kopien die alte Version. Neue Dateien auch in FILES eintragen.
-const CACHE_VERSION = 'dochtwerk-17';
+const CACHE_VERSION = 'dochtwerk-18';
 
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
@@ -12,7 +12,7 @@ const FILES = [
   'js/core/units.js', 'js/core/pricing.js', 'js/core/glass-volume.js', 'js/core/defaults.js', 'js/core/state.js',
   'js/core/calc-cost.js', 'js/core/calc-plan.js',
   'js/ui/components.js', 'js/ui/icons.js', 'js/ui/calc-parts.js', 'js/ui/sheets.js',
-  'js/ui/screens/start.js', 'js/ui/screens/export.js', 'js/ui/screens/data.js', 'js/core/backup.js', 'js/core/slug.js', 'js/core/export-text.js', 'js/core/zip.js', 'js/core/crc32.js','js/ui/screens/material-list.js', 'js/ui/screens/material-detail.js',
+  'js/ui/screens/start.js', 'js/ui/screens/export.js', 'js/ui/screens/data.js', 'js/core/backup.js', 'js/core/legacy-import.js', 'js/core/slug.js', 'js/core/export-text.js', 'js/core/zip.js', 'js/core/crc32.js','js/ui/screens/material-list.js', 'js/ui/screens/material-detail.js',
   'js/ui/screens/cost.js', 'js/ui/screens/cost-result.js', 'js/ui/screens/plan.js',
   'js/ui/screens/gallery.js', 'js/ui/screens/slideshow.js', 'js/ui/screens/candle-detail.js',
 ];
