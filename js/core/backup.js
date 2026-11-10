@@ -12,23 +12,38 @@ export const dateStamp = (d = new Date()) =>
 
 export const sideId = (c) => c.photos.find((p) => p.role === 'side')?.id;
 
-// candles: exportierbare Kerzen; photoBytes(id) -> Uint8Array der Hauptdatei
-export async function buildExportZip(candles, photoBytes, now = new Date()) {
-  const slugs = uniqueSlugs(candles.map((c) => c.name));
-  const files = [];
-  for (const [i, c] of candles.entries()) {
-    files.push({ name: `${slugs[i]}/seite.jpg`, data: await photoBytes(sideId(c)) });
-    files.push({ name: `${slugs[i]}/angaben.txt`, data: enc.encode(angabenText(c)) });
+// candles: exportierbare Kerzen; photoBytes(id) -> Uint8Array der Hauptdatei oder null, wenn das Foto fehlt.
+// Kerzen ohne lesbares Seitenfoto werden ausgelassen und über onMissing(kerze) gemeldet.
+export async function buildExportZip(candles, photoBytes, now = new Date(), onMissing = () => {}) {
+  const ready = [];
+  for (const c of candles) {
+    const data = await photoBytes(sideId(c));
+    if (data) ready.push({ c, data });
+    else onMissing(c);
   }
+  const slugs = uniqueSlugs(ready.map(({ c }) => c.name));
+  const files = ready.flatMap(({ c, data }, i) => [
+    { name: `${slugs[i]}/seite.jpg`, data },
+    { name: `${slugs[i]}/angaben.txt`, data: enc.encode(angabenText(c)) },
+  ]);
   return writeZip(files, now);
 }
 
-export async function buildBackupZip(state, photoBytes, now = new Date()) {
-  const files = [{ name: 'state.json', data: enc.encode(JSON.stringify(state)) }];
+// Ein fehlendes Foto bricht die Sicherung nicht ab: es wird über onMissing(kerze, foto) gemeldet,
+// und state.json enthält den Verweis nicht, damit sich die Sicherung wiederherstellen lässt.
+export async function buildBackupZip(state, photoBytes, now = new Date(), onMissing = () => {}) {
+  const files = [], gone = new Set();
   for (const c of state.candles) {
-    for (const p of c.photos) files.push({ name: `fotos/${p.id}.jpg`, data: await photoBytes(p.id) });
+    for (const p of c.photos) {
+      const data = await photoBytes(p.id);
+      if (data) files.push({ name: `fotos/${p.id}.jpg`, data });
+      else { gone.add(p.id); onMissing(c, p); }
+    }
   }
-  return writeZip(files, now);
+  const saved = gone.size
+    ? { ...state, candles: state.candles.map((c) => ({ ...c, photos: c.photos.filter((p) => !gone.has(p.id)) })) }
+    : state;
+  return writeZip([{ name: 'state.json', data: enc.encode(JSON.stringify(saved)) }, ...files], now);
 }
 
 // bytes -> { state, photos: [{ id, data }] }; wirft bei ungültiger Sicherung

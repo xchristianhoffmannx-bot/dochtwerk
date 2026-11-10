@@ -1,7 +1,7 @@
 import { startRouter } from './router.js';
 import { h } from './ui/components.js';
 import { T } from './texts.js';
-import { loadStore, onSaveError, requestPersist } from './store.js';
+import { loadStore, onSaveError, requestPersist, reconcilePhotos } from './store.js';
 import start from './ui/screens/start.js';
 import exportScreen from './ui/screens/export.js';
 import data from './ui/screens/data.js';
@@ -37,6 +37,10 @@ onSaveError(() => {
 });
 
 await loadStore();
+const lostPhotos = await reconcilePhotos();
+if (lostPhotos) {
+  document.getElementById('banner').after(h('div', { class: 'banner banner-info', role: 'status' }, T.photosLost(lostPhotos)));
+}
 requestPersist();
 startRouter(routes, document.getElementById('app'));
 

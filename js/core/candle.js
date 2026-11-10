@@ -12,3 +12,22 @@ export function missingForExport(c) {
 }
 
 export const isExportable = (c) => missingForExport(c).length === 0;
+
+// Abgleich zwischen Foto-Verweisen im Zustand und den Schlüsseln im Foto-Speicher.
+// missing: Verweise ohne Foto, orphans: Fotos ohne Verweis.
+export function photoDiff(state, keys) {
+  const have = new Set(keys), refs = new Set(), missing = [];
+  for (const c of state.candles) {
+    for (const p of c.photos || []) {
+      refs.add(p.id);
+      if (!have.has(p.id)) missing.push(p.id);
+    }
+  }
+  return { missing, orphans: keys.filter((k) => !refs.has(k)) };
+}
+
+// Verweise auf nicht mehr vorhandene Fotos aus allen Kerzen entfernen
+export function dropPhotoRefs(state, ids) {
+  const gone = new Set(ids);
+  for (const c of state.candles) if (Array.isArray(c.photos)) c.photos = c.photos.filter((p) => !gone.has(p.id));
+}

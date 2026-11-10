@@ -2,7 +2,7 @@
 import { h, field, selectInput, textInput, confirmDialog, sheet, toast } from '../components.js';
 import { icon } from '../icons.js';
 import { T } from '../../texts.js';
-import { getState, commit, getPhoto, putPhoto, deletePhoto, requestPersist } from '../../store.js';
+import { getState, commit, flush, getPhoto, putPhoto, deletePhoto, requestPersist } from '../../store.js';
 import { pickImage, processFile, UrlBag } from '../../photos.js';
 import { pickSource } from '../sheets.js';
 import { MAX_SCENTS, blankRow } from '../../calc-forms.js';
@@ -64,8 +64,9 @@ export default function candleDetail(id) {
       commit(() => setSide(work, p.id));
     } else if (choice === 'delete') {
       if (!(await confirmDialog({ ...P.confirmRemove, danger: true }))) return;
-      await deletePhoto(p.id).catch(() => {});
+      // erst den Zustand sichern, dann das Foto löschen: so bleibt nie ein Verweis ohne Foto zurück
       commit(() => removePhoto(work, p.id));
+      if (await flush()) await deletePhoto(p.id).catch(() => {});
       if (newPhotoIds.includes(p.id)) newPhotoIds.splice(newPhotoIds.indexOf(p.id), 1);
     } else return;
     renderPhotos();
@@ -186,8 +187,10 @@ export default function candleDetail(id) {
       class: 'link-danger', type: 'button',
       onclick: async () => {
         if (!(await confirmDialog({ ...K.confirmRemove(stored.name || T.gallery.unnamed), danger: true }))) return;
-        await Promise.all(stored.photos.map((p) => deletePhoto(p.id).catch(() => {})));
+        // erst den Zustand sichern, dann die Fotos löschen: so bleibt nie ein Verweis ohne Foto zurück
+        const photoIds = stored.photos.map((p) => p.id);
         commit(() => state.candles.splice(state.candles.indexOf(stored), 1));
+        if (await flush()) await Promise.all(photoIds.map((pid) => deletePhoto(pid).catch(() => {})));
         dirty = false;
         toast(K.removed);
         location.hash = '#/galerie';

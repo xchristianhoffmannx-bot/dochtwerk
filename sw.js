@@ -2,7 +2,8 @@
 // WICHTIG: Bei JEDER Änderung an ausgelieferten Dateien die Version hochzählen, hier UND
 // APP_VERSION in js/texts.js (derselbe Wert; ein Test prüft das), sonst zeigen installierte
 // Kopien die alte Version. Neue Dateien auch in FILES eintragen.
-const CACHE_VERSION = 'dochtwerk-1.1.0';
+const CACHE_PREFIX = 'dochtwerk-';
+const CACHE_VERSION = 'dochtwerk-1.1.1';
 
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',
@@ -19,7 +20,8 @@ const FILES = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_VERSION).then((c) => c.addAll(FILES)));
+  // cache: 'reload' holt jede Datei frisch vom Server, nicht aus dem HTTP-Cache des Browsers
+  e.waitUntil(caches.open(CACHE_VERSION).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' })))));
 });
 
 self.addEventListener('message', (e) => { if (e.data === 'skipWaiting') self.skipWaiting(); });
@@ -27,7 +29,8 @@ self.addEventListener('message', (e) => { if (e.data === 'skipWaiting') self.ski
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
+      // nur eigene alte Caches löschen: unter derselben Adresse (github.io) liegen auch andere Apps
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith(CACHE_PREFIX) && k !== CACHE_VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
