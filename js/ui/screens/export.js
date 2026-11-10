@@ -2,7 +2,7 @@
 import { h, toast } from '../components.js';
 import { icon } from '../icons.js';
 import { T } from '../../texts.js';
-import { getState, getPhoto } from '../../store.js';
+import { getState, photoBytes } from '../../store.js';
 import { download } from '../../photos.js';
 import { missingForExport } from '../../core/candle.js';
 import { buildExportZip, sideId, dateStamp } from '../../core/backup.js';
@@ -67,10 +67,14 @@ export default function exportScreen() {
     button.disabled = true;
     try {
       const chosen = ready.filter((c) => picked.has(c.id));
-      const zip = await buildExportZip(chosen, async (id) => new Uint8Array(await (await getPhoto(id)).blob.arrayBuffer()));
+      const skipped = []; // Kerzen, deren Seitenfoto im Speicher fehlt
+      const zip = await buildExportZip(chosen, photoBytes, new Date(), (c) => skipped.push(c.name));
       const name = `dochtwerk-export-${dateStamp()}.zip`;
-      download(zip, name);
-      toast(E.done(name));
+      if (skipped.length === chosen.length) toast(E.photoMissing(skipped));
+      else {
+        download(zip, name);
+        toast(skipped.length ? E.donePartial(name, skipped) : E.done(name));
+      }
     } catch { toast(E.failed); }
     sync();
   });

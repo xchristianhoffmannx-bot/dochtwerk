@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.1.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.1.1'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -159,6 +159,7 @@ export const T = {
   update: { text: 'Neue Version verfügbar.', button: 'Neu laden' },
   saveFailed: 'Speichern fehlgeschlagen. Sichere deine Daten.',
   saveFailedLink: 'Zu „Sichern & Hinweise“',
+  photosLost: (n) => `${n} ${n === 1 ? 'Foto war' : 'Fotos waren'} nicht mehr im Speicher und ${n === 1 ? 'wurde' : 'wurden'} aus der Galerie entfernt.`,
   export: {
     title: 'Kerzen exportieren',
     sub: 'Wähle die Kerzen für dein ZIP-Paket.',
@@ -173,6 +174,8 @@ export const T = {
     empty: 'Noch keine Kerzen in der Galerie.',
     emptyLink: 'Zur Galerie',
     done: (name) => `Exportiert: ${name}`,
+    donePartial: (name, names) => `Exportiert: ${name}. Ohne ${names.join(', ')} (Seitenfoto fehlt im Speicher).`,
+    photoMissing: (names) => `Nicht exportiert, das Seitenfoto fehlt im Speicher: ${names.join(', ')}`,
     failed: 'Export fehlgeschlagen.',
   },
   data: {
@@ -182,12 +185,14 @@ export const T = {
     backupText: 'Erzeugt ein ZIP mit allen Daten und Fotos.',
     backup: 'Daten sichern',
     backupDone: (name) => `Gesichert: ${name}`,
+    backupPartial: (name, names) => `Gesichert: ${name}. Bei ${names.join(', ')} fehlte ein Foto im Speicher, es ist nicht in der Sicherung.`,
     backupFailed: 'Sicherung fehlgeschlagen.',
     restoreTitle: 'Wiederherstellen',
     restore: 'Sicherung wählen',
     restoreConfirm: { title: 'Alle aktuellen Daten durch die Sicherung ersetzen?', text: 'Das lässt sich nicht rückgängig machen.', ok: 'Ersetzen', cancel: 'Abbrechen' },
     restored: (k, f) => `Wiederhergestellt: ${k} ${k === 1 ? 'Kerze' : 'Kerzen'}, ${f} ${f === 1 ? 'Foto' : 'Fotos'}`,
     invalid: 'Diese Datei ist keine gültige Sicherung.',
+    restoreFailed: 'Wiederherstellung fehlgeschlagen. Deine bisherigen Daten sind unverändert.',
     legacyTitle: 'Aus dem alten Kerzenkalkulator',
     legacyText: 'Im alten Kalkulator unter ⓘ „Sichern“ tippen und die Datei hier wählen. Gefäße, Wachse und Duftöle werden übernommen; schon vorhandenes bleibt unverändert.',
     legacy: 'Alte Sicherung wählen',

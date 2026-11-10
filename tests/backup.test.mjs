@@ -35,4 +35,25 @@ test('Sicherung: Rundlauf, fehlendes Foto und fremde Datei werden abgelehnt', as
   assert.throws(() => parseBackup(new TextEncoder().encode('kein zip')));
 });
 
+test('Sicherung: fehlendes Foto wird gemeldet und ausgelassen, Rest bleibt wiederherstellbar', async () => {
+  const s = newState();
+  s.candles.push(candle('a', 'Rose', ['p1', 'weg']), candle('b', 'Zimt', ['p3']));
+  const missing = [];
+  const zip = await buildBackupZip(s, async (id) => (id === 'weg' ? null : bytes(id)), new Date(), (c, p) => missing.push(`${c.name}:${p.id}`));
+  assert.deepEqual(missing, ['Rose:weg']);
+  const r = parseBackup(zip); // wirft nicht: state.json verweist nicht mehr auf das fehlende Foto
+  assert.deepEqual(r.photos.map((p) => p.id), ['p1', 'p3']);
+  assert.deepEqual(r.state.candles[0].photos.map((p) => p.id), ['p1']);
+  assert.deepEqual(s.candles[0].photos.map((p) => p.id), ['p1', 'weg']); // der laufende Zustand bleibt unverändert
+});
+
+test('Export-ZIP: Kerze ohne lesbares Seitenfoto wird ausgelassen und gemeldet', async () => {
+  const skipped = [];
+  const zip = await buildExportZip(
+    [candle('a', 'Vanille', ['weg']), candle('b', 'Vanille', ['p3'])],
+    async (id) => (id === 'weg' ? null : bytes(id)), new Date(), (c) => skipped.push(c.id));
+  assert.deepEqual(skipped, ['a']);
+  assert.deepEqual(readZip(zip).map((f) => f.name), ['vanille/seite.jpg', 'vanille/angaben.txt']);
+});
+
 test('dateStamp', () => assert.equal(dateStamp(new Date(2026, 10, 5)), '2026-11-05'));

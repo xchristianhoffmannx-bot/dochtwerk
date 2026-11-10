@@ -141,3 +141,17 @@ test('Foto-Größe: nie hochskalieren, lange Kante begrenzt', () => {
   assert.deepEqual(fitSize(3000, 4000, 400), { w: 300, h: 400 });
   assert.deepEqual(fitSize(800, 600, 2000), { w: 800, h: 600 });
 });
+
+test('Foto-Abgleich: Verweise ohne Foto und Fotos ohne Verweis', async () => {
+  const { photoDiff, dropPhotoRefs } = await import('../js/core/candle.js');
+  const state = { candles: [
+    { photos: [{ id: 'p1', role: 'side' }, { id: 'weg', role: 'other' }] },
+    { photos: [{ id: 'p2', role: 'side' }] },
+    { }, // Kerze ohne Fotoliste darf den Abgleich nicht stören
+  ] };
+  const d = photoDiff(state, ['p1', 'p2', 'verwaist']);
+  assert.deepEqual(d, { missing: ['weg'], orphans: ['verwaist'] });
+  dropPhotoRefs(state, d.missing);
+  assert.deepEqual(state.candles.map((c) => (c.photos || []).map((p) => p.id)), [['p1'], ['p2'], []]);
+  assert.deepEqual(photoDiff(state, ['p1', 'p2']), { missing: [], orphans: [] });
+});
