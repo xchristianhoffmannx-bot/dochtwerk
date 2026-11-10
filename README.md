@@ -22,7 +22,7 @@ python -m http.server 8090    # dann http://localhost:8090
 ```
 
 - Reines HTML/CSS/JS (ES-Module), kein Bundler.
-- **`CACHE_VERSION` in `sw.js` bei jeder Änderung an ausgelieferten Dateien hochzählen** und neue Dateien in `FILES` eintragen (ein Test prüft die Module). Sonst sehen installierte Kopien die alte Version. Beim Testen im Browser alte Service Worker und Caches löschen.
+- **Bei jeder Änderung an ausgelieferten Dateien die Version hochzählen: `APP_VERSION` in `js/texts.js` und `CACHE_VERSION` in `sw.js` (`dochtwerk-<APP_VERSION>`); `npm test` schlägt sonst fehl.** Die Zahl steht in der App unter „Sichern & Hinweise“. Neue Dateien in `FILES` eintragen (ein Test prüft die Module). Sonst sehen installierte Kopien die alte Version. Beim Testen im Browser alte Service Worker und Caches löschen.
 - Neue Versionen erscheinen beim Nutzer als Hinweis „Neue Version verfügbar“ mit Button „Neu laden“.
 
 ## Hinweise
