@@ -1,6 +1,7 @@
 import { h, confirmDialog, toast } from '../components.js';
 import { T } from '../../texts.js';
 import { getState, commit } from '../../store.js';
+import { takeReturn } from '../../router.js';
 import { COLLECTION, FIELDS, formValues, validate, derivedLines } from '../../materials.js';
 
 export default function materialDetail(art, id) {
@@ -11,6 +12,7 @@ export default function materialDetail(art, id) {
     return h('div');
   }
 
+  const returnTo = takeReturn(); // kam der Nutzer aus dem Rechner? Dann nach dem Speichern dorthin zurück
   const raw = formValues(art, existing);
   const fields = FIELDS[art];
   const wraps = {}, errEls = {}, inputs = {};
@@ -76,10 +78,16 @@ export default function materialDetail(art, id) {
       inputs[first.key].focus?.();
       return;
     }
-    commit(() => (existing ? Object.assign(existing, r.item) : list.push({ id: crypto.randomUUID(), ...r.item })));
+    const newId = crypto.randomUUID();
+    commit(() => {
+      if (existing) Object.assign(existing, r.item); else list.push({ id: newId, ...r.item });
+      // neues Glas gleich im Kostenentwurf auswählen
+      const d = getState().drafts.cost;
+      if (returnTo && art === 'glaeser' && !existing && d) { d.glassId = newId; d.noGlass = false; }
+    });
     dirty = false;
     toast(M.saved);
-    location.hash = `#/material/${art}`;
+    location.hash = returnTo || `#/material/${art}`;
   });
 
   form.append(h('button', { class: 'btn btn-primary', type: 'submit' }, M.save));

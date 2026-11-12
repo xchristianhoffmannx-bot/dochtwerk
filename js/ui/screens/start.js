@@ -35,8 +35,8 @@ export default function start() {
   return h('section', { class: 'screen' },
     h('h1', { class: 'screen-title', style: 'margin-top:28px' }, S.title),
     h('a', { class: 'tile tile-hero', href: '#/kosten' },
-      h('div', {}, h('h2', { class: 'tile-title' }, S.cost.title), h('p', { class: 'tile-desc' }, S.cost.desc)),
-      icon('calculator')),
+      h('div', {}, icon('calculator'), h('h2', { class: 'tile-title' }, S.cost.title), h('p', { class: 'tile-desc' }, S.cost.desc)),
+      h('span', { class: 'hero-go', 'aria-hidden': 'true' }, icon('arrow-right'))),
     h('div', { class: 'tile-grid' }, tile('#/material/glaeser', 'box', S.material), tile('#/rechner', 'droplets', S.plan)),
     gallery,
     h('div', { class: 'list' }, row('#/export', 'folder-down', S.export), row('#/daten', 'check', S.data)));

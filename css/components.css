@@ -34,11 +34,14 @@
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-contrast);
-  aspect-ratio: 3 / 1;
-  padding: 26px;
-  margin-top: 26px;
+  align-items: center;
+  gap: 12px;
+  padding: 22px;
+  margin-top: 22px;
 }
-.tile-hero .tile-title { font: 400 clamp(20px, 5.7vw, 25px)/1.2 var(--font-serif); margin: 0; }
+.tile-hero .tile-title { font: 400 clamp(24px, 7vw, 30px)/1.2 var(--font-serif); margin: 14px 0 0; }
+.hero-go { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border: 1.5px solid rgba(255, 255, 255, .7); border-radius: 50%; }
+.hero-go .icon { color: var(--accent-contrast); opacity: 1; }
 .tile-hero .tile-desc { color: var(--accent-contrast); margin-top: 12px; max-width: 24ch; }
 .tile-hero .icon { color: var(--accent-contrast); opacity: .9; }
 
@@ -295,3 +298,5 @@ body.is-sub .brand .icon { width: 20px; height: 20px; }
 .form > .section-title:first-child { margin-top: 0; }
 /* Hauptaktion bleibt über der unteren Leiste sichtbar */
 .sticky-action { position: sticky; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 5; box-shadow: 0 6px 18px rgba(60, 40, 50, .22); }
+
+.boot { padding: 48px var(--gutter); text-align: center; color: var(--muted); }

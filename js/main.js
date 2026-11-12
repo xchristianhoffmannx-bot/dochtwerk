@@ -1,5 +1,5 @@
 import { startRouter } from './router.js';
-import { h } from './ui/components.js';
+import { h, toast } from './ui/components.js';
 import { icon } from './ui/icons.js';
 import { T } from './texts.js';
 import { loadStore, onSaveError, requestPersist } from './store.js';
@@ -76,6 +76,14 @@ if ('serviceWorker' in navigator) {
       const w = reg.installing;
       w?.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) offer(w); });
     });
+  }).catch(() => {});
+  // einmalig melden, wenn alles für den Offline-Betrieb bereitliegt (der Cache wird beim Installieren gefüllt)
+  navigator.serviceWorker.ready.then(() => {
+    try {
+      if (localStorage.getItem('offlineHint')) return;
+      localStorage.setItem('offlineHint', '1');
+      toast(T.offlineReady);
+    } catch { /* ohne Speicher einfach nicht melden */ }
   }).catch(() => {});
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {

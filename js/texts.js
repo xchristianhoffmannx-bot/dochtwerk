@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.7.1'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.8.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -179,6 +179,7 @@ export const T = {
   },
   slideshow: { label: 'Diashow', close: 'Schließen', empty: 'Noch keine Fotos.' },
   update: { text: 'Neue Version verfügbar.', button: 'Neu laden' },
+  offlineReady: 'Offline verfügbar. Dochtwerk funktioniert jetzt auch ohne Internet.',
   saveFailed: 'Speichern fehlgeschlagen. Sichere deine Daten.',
   saveFailedLink: 'Zu „Sichern & Hinweise“',
   export: {

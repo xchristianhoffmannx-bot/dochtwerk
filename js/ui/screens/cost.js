@@ -2,6 +2,7 @@ import { h, field, selectInput, textInput } from '../components.js';
 import { icon } from '../icons.js';
 import { T } from '../../texts.js';
 import { getState, commit } from '../../store.js';
+import { nav } from '../../router.js';
 import { formatNumber } from '../../core/units.js';
 import { calcCost } from '../../core/calc-cost.js';
 import { getDraft, emptyCostDraft, costInput } from '../../calc-forms.js';
@@ -28,7 +29,7 @@ export default function cost() {
       onchange: (v) => { draft.glassId = v; save(); },
     });
     return h('div', {}, field(C.glass, select,
-      !state.glasses.length && h('p', { class: 'hint' }, h('a', { href: '#/material/glaeser/neu' }, C.createGlass))), toggle);
+      !state.glasses.length && h('p', { class: 'hint' }, h('a', { href: '#/material/glaeser/neu', onclick: () => { nav.returnTo = '#/kosten'; } }, C.createGlass))), toggle);
   }
 
   // Duftöl-Bereich nur bei Bedarf: "Ohne Duftöl" blendet Duftauswahl und Menge aus
@@ -86,7 +87,7 @@ export default function cost() {
     if (!r.ok) {
       markInvalid(r.errors);
       r.errors.forEach((msg) => box.append(h('p', { class: 'msg msg-error' }, msg, ' ',
-        /Leergewicht/.test(msg) && draft.glassId && h('a', { href: `#/material/glaeser/${draft.glassId}` }, C.editGlass))));
+        /Leergewicht/.test(msg) && draft.glassId && h('a', { href: `#/material/glaeser/${draft.glassId}`, onclick: () => { nav.returnTo = '#/kosten'; } }, C.editGlass))));
       return;
     }
     commit(() => { state.drafts.lastExtras = input.extras.map((e) => ({ extraId: e.extraId, qty: e.qty })); });

@@ -11,6 +11,10 @@ export function parentOf(path) {
   return '/';
 }
 
+// Einmaliger Rücksprung: Wer aus einem Screen zum Material springt (z. B. "Glas anlegen"), kommt nach dem Speichern zurück.
+export const nav = { returnTo: null };
+export const takeReturn = () => { const r = nav.returnTo; nav.returnTo = null; return r; };
+
 export const currentPath = () => location.hash.slice(1) || '/';
 
 // routes: [[RegExp, (…Treffergruppen) => Element]]
