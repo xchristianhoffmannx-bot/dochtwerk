@@ -2,7 +2,7 @@
 // WICHTIG: Bei JEDER Änderung an ausgelieferten Dateien die Version hochzählen, hier UND
 // APP_VERSION in js/texts.js (derselbe Wert; ein Test prüft das), sonst zeigen installierte
 // Kopien die alte Version. Neue Dateien auch in FILES eintragen.
-const CACHE_VERSION = 'dochtwerk-1.8.1';
+const CACHE_VERSION = 'dochtwerk-1.9.0';
 
 const FILES = [
   './', 'index.html', 'manifest.webmanifest',

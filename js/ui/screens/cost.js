@@ -5,7 +5,7 @@ import { getState, commit } from '../../store.js';
 import { nav } from '../../router.js';
 import { formatNumber } from '../../core/units.js';
 import { calcCost } from '../../core/calc-cost.js';
-import { getDraft, emptyCostDraft, costInput } from '../../calc-forms.js';
+import { getDraft, emptyCostDraft, costInput, perWaxOn } from '../../calc-forms.js';
 import { waxSection, scentSection, amountRow, keepScroll } from '../calc-parts.js';
 
 const C = T.cost;
@@ -35,13 +35,15 @@ export default function cost() {
   // Duftöl-Bereich nur bei Bedarf: "Ohne Duftöl" blendet Duftauswahl und Menge aus
   function scentToggle() {
     const opt = (noScent, label) => {
-      const r = h('input', { type: 'radio', name: 'scent-use', value: noScent ? 'no' : 'yes' });
-      r.checked = !!draft.noScent === noScent;
-      r.addEventListener('change', () => { draft.noScent = noScent; save(); build(); });
+      const r = h('input', { type: 'radio', name: 'scent-use', value: noScent === 'wax' ? 'wax' : noScent ? 'no' : 'yes' });
+      r.checked = noScent === 'wax' ? perWaxOn(draft) : !perWaxOn(draft) && !!draft.noScent === noScent;
+      r.addEventListener('change', () => { draft.noScent = noScent === true; draft.scentPerWax = noScent === 'wax'; save(); build(); });
       return h('label', {}, r, h('span', {}, label));
     };
+    // "Je Wachs" erst, wenn mindestens zwei Wachse gewählt sind
+    const canPerWax = !!draft.waxId && draft.moreWaxes.some((x) => x.waxId);
     return h('div', { class: 'field' }, h('div', { class: 'field-label' }, C.scentUse),
-      h('div', { class: 'seg', role: 'radiogroup', 'aria-label': C.scentUse }, opt(false, C.withScent), opt(true, C.withoutScent)));
+      h('div', { class: 'seg', role: 'radiogroup', 'aria-label': C.scentUse }, opt(false, C.withScent), ...(canPerWax ? [opt('wax', C.perWax)] : []), opt(true, C.withoutScent)));
   }
 
   function extrasBlock() {
@@ -105,7 +107,7 @@ export default function cost() {
         : field(C.weight, textInput({ id: 'weight', value: draft.totalWeight, oninput: (v) => { draft.totalWeight = v; save(); } })),
       h('h2', { class: 'section-title' }, C.scentAndExtras),
       scentToggle(),
-      ...(draft.noScent ? [] : [scentSection(ctx), amountRow(ctx)]),
+      ...(draft.noScent || perWaxOn(draft) ? [] : [scentSection(ctx), amountRow(ctx)]),
       extrasBlock(),
       msgs,
       h('button', { class: 'btn btn-primary sticky-action', type: 'button', onclick: () => calculate(msgs) }, icon('calculator'), C.calc),

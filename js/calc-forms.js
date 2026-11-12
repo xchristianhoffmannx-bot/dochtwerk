@@ -4,6 +4,8 @@ import { pricePerKg, pricePerMl, pricePerPiece } from './core/pricing.js';
 
 export const MAX_SCENTS = 4;
 export const MAX_WAXES = 3;
+// Duftöl je Wachs: gilt nur mit mindestens zwei gewählten Wachsen
+export const perWaxOn = (d) => !!d.scentPerWax && !d.noScent && !!d.waxId && (d.moreWaxes || []).some((r) => r.waxId);
 export const blankRow = () => ({ scentId: '', share: '', ml: '' });
 
 // Zubehör-Vorauswahl = Auswahl der letzten Rechnung (Spec A2)
@@ -63,25 +65,33 @@ export function costInput(state, d) {
     extras.push({ extraId: x.id, name: x.name, qty, pricePerPiece: perPiece(x) });
   }
   const byG = d.waxUnit === 'g';
-  const waxOf = (x, v, scented = true) => ({ scented, waxId: x.id, name: x.name, pricePerKg: pricePerKg(x.price, x.quantityKg), densityGml: x.densityGml, fragranceMaxPct: x.fragranceMaxPct, sharePct: byG ? null : v, grams: byG ? v : null });
+  const perWax = perWaxOn(d);
+  // Duft eines Wachses (nur im Modus "je Wachs")
+  const scentOf = (scentId, pctText) => {
+    const s = perWax && state.scents.find((y) => y.id === scentId);
+    return s ? { scentId: s.id, name: s.name, pricePerMl: pricePerMl(s.price, s.quantityMl), densityGml: s.densityGml, pct: read(pctText, `Duftölmenge ${s.name}`, errors) } : null;
+  };
+  const waxOf = (x, v, scented = true, scent = null) => ({ scented, scent, waxId: x.id, name: x.name, pricePerKg: pricePerKg(x.price, x.quantityKg), densityGml: x.densityGml, fragranceMaxPct: x.fragranceMaxPct, sharePct: byG ? null : v, grams: byG ? v : null });
   const more = w ? (d.moreWaxes || []).filter((r) => r.waxId).flatMap((r) => {
     const x = state.waxes.find((y) => y.id === r.waxId);
-    return x ? [waxOf(x, read(r.share, `${byG ? 'Menge' : 'Anteil'} ${x.name}`, errors), r.scented !== false)] : []; // gelöschtes Wachs entfällt
+    return x ? [waxOf(x, read(r.share, `${byG ? 'Menge' : 'Anteil'} ${x.name}`, errors), r.scented !== false, scentOf(r.scentId, r.pct))] : []; // gelöschtes Wachs entfällt
   }) : [];
   const input = {
     noGlass: !!d.noGlass,
     waxAmountG: d.noGlass ? read(d.waxAmount, 'Wachsmenge', errors) : null,
     glass: g && !d.noGlass ? { name: g.name, emptyWeightG: g.emptyWeightG, price: perPiece(g) } : null,
     wax: w ? waxOf(w, null) : null,
-    waxes: w ? [waxOf(w, null, d.firstScented !== false), ...more] : [],
+    waxes: w ? [waxOf(w, null, d.firstScented !== false, scentOf(d.firstScentId, d.firstPct)), ...more] : [],
+    perWax,
     waxUnit: byG ? 'g' : 'percent',
-    mode: d.mode,
+    mode: perWax ? 'percent' : d.mode,
     totalWeightG: d.noGlass ? null : read(d.totalWeight, 'Gesamtgewicht', errors),
-    pct: d.mode === 'ml' || d.noScent ? null : read(d.pct, 'Duftölmenge', errors),
-    scents: d.noScent ? [] : scentsOf(state, d, errors), // "Ohne Duftöl"
+    pct: d.mode === 'ml' || d.noScent || perWax ? null : read(d.pct, 'Duftölmenge', errors),
+    scents: d.noScent ? [] : perWax ? [] : scentsOf(state, d, errors), // "Ohne Duftöl"; je Wachs: unten aus den Wachsen
     extras,
     markup: { on: state.settings.markupOn, pct: state.settings.markupPct },
   };
+  if (perWax) input.scents = input.waxes.filter((x) => x.scent).map((x) => ({ scentId: x.scent.scentId, name: x.scent.name, pricePerMl: x.scent.pricePerMl, densityGml: x.scent.densityGml, sharePct: null, ml: null }));
   return { input, errors };
 }
 

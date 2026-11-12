@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.8.1'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.9.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -41,6 +41,9 @@ export const T = {
     scentAndExtras: 'Duftöl & Zubehör',
     scentUse: 'Duftöl',
     withScent: 'Mit Duftöl',
+    perWax: 'Je Wachs',
+    scentFor: (name) => `Duftöl für ${name}`,
+    pctOfWax: 'Duftölmenge (% vom Wachs)',
     withoutScent: 'Ohne Duftöl',
     noGlass: 'Ohne Glas (z. B. Figur)',
     waxAmount: 'Wachsmenge (g)',

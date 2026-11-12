@@ -32,13 +32,14 @@ export function snapshotCandle({ state, draft, input, result, name, now = new Da
     wax: { ...waxSnapshot(w), pricePerKg: input.wax.pricePerKg },
     // nur bei Mischungen: alle Wachse mit Anteil, Gramm und Kosten (wax bleibt das erste)
     ...(result.waxes.length > 1 && {
-      waxMix: result.waxes.map((x, i) => ({ waxId: input.waxes[i].waxId, name: x.name, pricePerKg: input.waxes[i].pricePerKg, sharePct: x.sharePct, scented: x.scented, grams: x.g, cost: x.cost })),
+      waxMix: result.waxes.map((x, i) => ({ waxId: input.waxes[i].waxId, name: x.name, pricePerKg: input.waxes[i].pricePerKg, sharePct: x.sharePct, scented: x.scented, ...(x.scentName && { scentName: x.scentName, scentPct: x.scentPct }), grams: x.g, cost: x.cost })),
     }),
     scentMode: input.mode,
     scents: result.scents.map((x, i) => ({
       scentId: input.scents[i].scentId ?? null, name: x.name,
       pricePerMl: input.scents[i].pricePerMl, densityGml: input.scents[i].densityGml,
       ml: x.ml, grams: x.g, shareMassPct: x.shareMassPct, shareVolPct: x.shareVolPct,
+      ...(x.waxName && { waxName: x.waxName, pct: x.pct }), // Duftöl je Wachs
     })),
     scentPct: result.scentPct,
     totalWeightG: input.totalWeightG, waxG: result.waxG, scentG: result.scentG,
@@ -116,7 +117,7 @@ function applyWaxMix(c, raw, state, next, errors, total) {
     });
     if (!bad && sum >= 100) { errors.waxes = byG ? 'Die weiteren Wachse wiegen zusammen so viel wie das ganze Wachs oder mehr.' : `Die Anteile ergeben zusammen ${toInput(Math.round(sum * 10) / 10)} %, das erste Wachs hätte nichts mehr.`; bad = true; }
     if (bad) return;
-    const first = { waxId: next.wax.waxId, name: next.wax.name, pricePerKg: next.wax.pricePerKg, densityGml: next.wax.densityGml, sharePct: 100 - sum, scented: raw.firstScented !== false };
+    const first = { ...(c.waxMix?.find((e) => e.waxId === next.wax.waxId) ?? {}), waxId: next.wax.waxId, name: next.wax.name, pricePerKg: next.wax.pricePerKg, densityGml: next.wax.densityGml, sharePct: 100 - sum, scented: raw.firstScented !== false };
     next.waxMix = [first, ...entries].map((e) => ({ ...e, grams: c.waxG > 0 ? (c.waxG * e.sharePct) / 100 : null }))
       .map((e) => ({ ...e, cost: e.grams != null ? (e.grams / 1000) * (e.pricePerKg ?? 0) : null }));
   }

@@ -5,7 +5,7 @@ import { h, field, fieldRow, selectInput, textInput } from './components.js';
 import { icon } from './icons.js';
 import { T } from '../texts.js';
 import { parseDecimal, formatPct } from '../core/units.js';
-import { MAX_SCENTS, MAX_WAXES, blankRow } from '../calc-forms.js';
+import { MAX_SCENTS, MAX_WAXES, blankRow, perWaxOn } from '../calc-forms.js';
 import { toInput } from '../materials.js';
 
 const C = T.cost;
@@ -39,7 +39,27 @@ export function waxSection(ctx, label) {
     box.addEventListener('change', () => { set(box.checked); save(); });
     return h('div', { class: 'extra-row' }, h('label', { for: id }, box, h('span', {}, C.waxScented)));
   };
-  if (draft.waxId && !draft.noScent) wrap.append(scentedBox('wax-scented-1', () => draft.firstScented !== false, (v) => { draft.firstScented = v; }));
+  const perWax = perWaxOn(draft);
+  // Modus "je Wachs": eigenes Duftöl und eigene Konzentration direkt am Wachs
+  const scentPick = (id, wax, get, set) => {
+    const box = h('div', { class: 'scent-pick' });
+    box.append(field(wax ? C.scentFor(wax.name) : C.scent, selectInput({
+      id: `${id}-scent`, value: get().scentId,
+      options: [['', C.none], ...state.scents.map((s) => [s.id, s.name])],
+      onchange: (v) => {
+        const cur = get();
+        cur.scentId = v;
+        if (v && !String(cur.pct ?? '').trim() && wax?.fragranceStdPct != null) cur.pct = toInput(wax.fragranceStdPct);
+        set(cur); save(); rebuild();
+      },
+    })));
+    if (get().scentId) box.append(field(C.pctOfWax, textInput({ id: `${id}-pct`, value: get().pct ?? '', oninput: (v) => { const cur = get(); cur.pct = v; set(cur); save(); } })));
+    return box;
+  };
+  const waxOfId = (id) => state.waxes.find((x) => x.id === id);
+  if (draft.waxId && perWax) wrap.append(scentPick('wax-1', waxOfId(draft.waxId),
+    () => ({ scentId: draft.firstScentId ?? '', pct: draft.firstPct ?? '' }), (v) => { draft.firstScentId = v.scentId; draft.firstPct = v.pct; }));
+  else if (draft.waxId && !draft.noScent) wrap.append(scentedBox('wax-scented-1', () => draft.firstScented !== false, (v) => { draft.firstScented = v; }));
   const chosen = more.filter((r) => r.waxId);
   let restEl = null;
   const byG = draft.waxUnit === 'g';
@@ -66,11 +86,13 @@ export function waxSection(ctx, label) {
         onclick: () => { more.splice(i, 1); save(); rebuild(); },
       }, icon('x'))));
     if (row.waxId) {
-      if (!draft.noScent) wrap.append(scentedBox(`wax-scented-${i + 2}`, () => row.scented !== false, (v) => { row.scented = v; }));
       wrap.append(field(byG ? C.mlGramField : C.share, textInput({
         id: `wax-share-${i + 2}`, value: row.share,
         oninput: (v) => { row.share = v; save(); updateRest(); },
       })));
+      if (perWax) wrap.append(scentPick(`wax-${i + 2}`, waxOfId(row.waxId),
+        () => ({ scentId: row.scentId ?? '', pct: row.pct ?? '' }), (v) => { row.scentId = v.scentId; row.pct = v.pct; }));
+      else if (!draft.noScent) wrap.append(scentedBox(`wax-scented-${i + 2}`, () => row.scented !== false, (v) => { row.scented = v; }));
     }
   });
   updateRest();

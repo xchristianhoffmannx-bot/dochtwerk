@@ -32,7 +32,9 @@ export default function costResult() {
       : r.waxes.map((w) => `${w.name} ${formatPct(w.sharePct)} %: ${grams(w.g)} · ${formatEuro(w.cost)}${w.scented || !r.scents.length ? '' : ' · ohne Duftöl'}`)),
   ];
   if (r.scents.length) {
-    const subs = r.scents.length === 1
+    const subs = input.perWax
+      ? r.scents.map((s) => `${s.name} im ${s.waxName} (${formatPct(s.pct)} %): ${grams(s.g)} · ${formatNumber(s.ml, 1)} ml`)
+      : r.scents.length === 1
       ? [`${grams(r.scents[0].g)} · ${formatNumber(r.scents[0].ml, 1)} ml`]
       : r.scents.map((s) => `${s.name}: ${grams(s.g)} · ${formatNumber(s.ml, 1)} ml`);
     rows.push(resultRow(R.scent, formatEuro(r.costs.scent), subs));

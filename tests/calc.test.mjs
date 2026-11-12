@@ -170,3 +170,22 @@ test('Figur ohne Glas: nur Wachsmenge, Duftöl kommt obendrauf, keine Glaskosten
   const m = calcCost({ noGlass: true, waxAmountG: 100, wax, mode: 'ml', scents: [{ ...vanille, ml: 10 }] });
   near(m.waxG, 100); near(m.scentPct, m.scentG);
 });
+
+test('Duftöl je Wachs: jedes Wachs mit eigenem Duft und eigener Konzentration', () => {
+  const soja = { ...wax, scent: { name: 'Vanille', densityGml: 0.95, pricePerMl: 0.1, pct: 10 } };
+  const raps = { name: 'Raps', pricePerKg: 10, sharePct: 40, scent: { name: 'Karamell', densityGml: 1, pricePerMl: 0.2, pct: 5 } };
+  const sc = [{ name: 'Vanille', densityGml: 0.95, pricePerMl: 0.1 }, { name: 'Karamell', densityGml: 1, pricePerMl: 0.2 }];
+  const r = calcCost({ ...base, waxes: [soja, raps], perWax: true, scents: sc, mode: 'percent' });
+  assert.ok(r.ok, JSON.stringify(r.errors));
+  near(r.waxG + r.scentG, 270);
+  near(r.waxes[0].g, r.waxG * 0.6); near(r.waxes[1].g, r.waxG * 0.4);
+  near(r.scents[0].g, r.waxes[0].g * 0.10); near(r.scents[1].g, r.waxes[1].g * 0.05);
+  assert.equal(r.scents[1].waxName, 'Raps');
+  // Gramm-Modus, nur das zweite Wachs hat Duft
+  const g = calcCost({ ...base, waxes: [{ ...wax }, { ...raps, sharePct: null, grams: 100 }], waxUnit: 'g', perWax: true, scents: [sc[1]], mode: 'percent' });
+  near(g.waxes[1].g, 100); near(g.scents[0].g, 5); near(g.waxG + g.scentG, 270);
+  // Figur ohne Glas
+  const f = calcCost({ noGlass: true, waxAmountG: 100, waxes: [soja, raps], perWax: true, scents: sc, mode: 'percent' });
+  near(f.waxG, 100); near(f.scentG, 100 * 0.6 * 0.1 + 100 * 0.4 * 0.05);
+  assert.match(calcCost({ ...base, waxes: [{ ...soja, scent: { ...soja.scent, pct: null } }, raps], perWax: true, scents: sc }).errors[0], /Duftölmenge für Vanille/);
+});
