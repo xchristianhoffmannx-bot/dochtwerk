@@ -144,3 +144,19 @@ test('Wachsmischung in Gramm: erstes Wachs bekommt den Rest', () => {
   assert.match(calcCost({ ...base, waxes: [wax, { ...raps, grams: 999 }], waxUnit: 'g', scents: [] }).errors[0], /nur/);
   assert.match(calcCost({ ...base, waxes: [wax, { ...raps, grams: null }], waxUnit: 'g', scents: [] }).errors[0], /Menge in g/);
 });
+
+test('Wachsmischung: Wachs ohne Duftöl, Prozent bezieht sich nur auf das beduftete Wachs', () => {
+  const raps = { name: 'Raps', pricePerKg: 10, sharePct: 50, scented: false };
+  const r = calcCost({ ...base, waxes: [wax, raps], mode: 'percent', pct: 10, scents: [vanille] });
+  // Inhalt 270 g = Wachs + 10 % von der Hälfte des Wachses -> waxG = 270 / 1,05
+  near(r.waxG, 270 / 1.05); near(r.scentG, r.waxG * 0.5 * 0.1);
+  near(r.waxes[0].g * 0.1, r.scentG);
+  assert.equal(r.waxes[1].scented, false);
+  // ml-Modus: gleicher Prozentwert wird zurückgerechnet
+  const m = calcCost({ ...base, waxes: [wax, raps], mode: 'ml', scents: [{ ...vanille, ml: r.scents[0].ml }] });
+  near(m.scentPct, 10, 1e-6); near(m.waxG, r.waxG);
+  // Gramm-Modus
+  const g = calcCost({ ...base, waxes: [wax, { ...raps, sharePct: null, grams: 100 }], waxUnit: 'g', mode: 'percent', pct: 10, scents: [vanille] });
+  near(g.waxes[1].g, 100); near(g.waxes[0].g * 0.1, g.scentG); near(g.waxG + g.scentG, 270);
+  assert.match(calcCost({ ...base, waxes: [{ ...wax, scented: false }, { ...raps, scented: false }], mode: 'percent', pct: 10, scents: [vanille] }).errors[0], /Duftöl bekommen/);
+});

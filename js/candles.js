@@ -29,7 +29,7 @@ export function snapshotCandle({ state, draft, input, result, name, now = new Da
     wax: { ...waxSnapshot(w), pricePerKg: input.wax.pricePerKg },
     // nur bei Mischungen: alle Wachse mit Anteil, Gramm und Kosten (wax bleibt das erste)
     ...(result.waxes.length > 1 && {
-      waxMix: result.waxes.map((x, i) => ({ waxId: input.waxes[i].waxId, name: x.name, pricePerKg: input.waxes[i].pricePerKg, sharePct: x.sharePct, grams: x.g, cost: x.cost })),
+      waxMix: result.waxes.map((x, i) => ({ waxId: input.waxes[i].waxId, name: x.name, pricePerKg: input.waxes[i].pricePerKg, sharePct: x.sharePct, scented: x.scented, grams: x.g, cost: x.cost })),
     }),
     scentMode: input.mode,
     scents: result.scents.map((x, i) => ({

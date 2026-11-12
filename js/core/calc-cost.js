@@ -41,44 +41,58 @@ export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'perce
   if (errors.length) return { ok: false, errors };
 
   const inner = totalWeightG - glass.emptyWeightG;
-  let waxG, scentG, p, rows, normalized = false;
+  // Duftöl-% bezieht sich auf das Wachs MIT Duftöl. Gramm davon = ka * waxG + kb.
+  const f = mix.map((w) => (w.scented === false ? 0 : 1));
+  if (scents.length && !f.includes(1)) return { ok: false, errors: ['Mindestens ein Wachs muss Duftöl bekommen.'] };
+  const gSum = byG ? mix.slice(1).reduce((x, w) => x + w.grams, 0) : 0;
+  let ws, ka, kb = 0;
+  if (byG && mix.length > 1) {
+    ka = f[0];
+    kb = mix.slice(1).reduce((x, w, i) => x + f[i + 1] * w.grams, 0) - f[0] * gSum;
+  } else {
+    ws = resolveShares(mix);
+    ka = mix.reduce((x, _, i) => x + (f[i] * ws.shares[i]) / 100, 0);
+  }
 
+  let waxG, scentG, p, rows, normalized = false;
   if (mode === 'ml') {
     rows = scents.map((s) => ({ ml: s.ml, g: s.ml * s.densityGml }));
-    scentG = rows.reduce((a, r) => a + r.g, 0);
+    scentG = rows.reduce((x, r) => x + r.g, 0);
     if (scentG >= inner) return { ok: false, errors: ['Das Duftöl wiegt mehr als der Kerzeninhalt.'] };
     waxG = inner - scentG;
-    p = (scentG / waxG) * 100;
-    const totalMl = rows.reduce((a, r) => a + r.ml, 0);
+  } else {
+    p = scents.length ? pct : 0;
+    waxG = (inner - (p / 100) * kb) / (1 + (p / 100) * ka);
+    scentG = inner - waxG;
+  }
+  if (byG && mix.length > 1) {
+    if (gSum >= waxG) return { ok: false, errors: [`Die weiteren Wachse wiegen ${formatNumber(gSum, 1)} g, das Wachs insgesamt aber nur ${formatNumber(waxG, 1)} g.`] };
+    ws = { shares: [((waxG - gSum) / waxG) * 100, ...mix.slice(1).map((w) => (w.grams / waxG) * 100)], normalized: false };
+  }
+  const scentedWaxG = ka * waxG + kb;
+  if (mode === 'ml') {
+    p = scentG > 0 ? (scentG / scentedWaxG) * 100 : 0;
+    const totalMl = rows.reduce((x, r) => x + r.ml, 0);
     rows.forEach((r) => {
       r.shareMassPct = part(r.g, scentG, 100 / rows.length);
       r.shareVolPct = part(r.ml, totalMl, 100 / rows.length);
     });
   } else {
-    p = scents.length ? pct : 0;
-    waxG = inner / (1 + p / 100);
-    scentG = inner - waxG;
     const r = resolveShares(scents);
     normalized = r.normalized;
     rows = scents.map((s, i) => {
       const g = (scentG * r.shares[i]) / 100;
       return { g, ml: g / s.densityGml, shareMassPct: r.shares[i] };
     });
-    const totalMl = rows.reduce((a, x) => a + x.ml, 0);
+    const totalMl = rows.reduce((x, y) => x + y.ml, 0);
     rows.forEach((x) => { x.shareVolPct = part(x.ml, totalMl, x.shareMassPct); });
   }
 
-  let ws;
-  if (byG && mix.length > 1) {
-    const gSum = mix.slice(1).reduce((a, w) => a + w.grams, 0);
-    if (gSum >= waxG) return { ok: false, errors: [`Die weiteren Wachse wiegen ${formatNumber(gSum, 1)} g, das Wachs insgesamt aber nur ${formatNumber(waxG, 1)} g.`] };
-    ws = { shares: [((waxG - gSum) / waxG) * 100, ...mix.slice(1).map((w) => (w.grams / waxG) * 100)], normalized: false };
-  } else ws = resolveShares(mix);
   const warnings = [];
   if (normalized) warnings.push('Die Anteile der weiteren Düfte ergeben über 100 %, sie wurden angepasst.');
   if (ws.normalized) warnings.push('Die Anteile der weiteren Wachse ergeben über 100 %, sie wurden angepasst.');
-  // bei mehreren Wachsen begrenzt das empfindlichste (kleinstes Maximum, nur Wachse mit Anteil)
-  const limits = mix.filter((w, i) => ws.shares[i] > 0 && num(w.fragranceMaxPct));
+  // bei mehreren Wachsen begrenzt das empfindlichste (kleinstes Maximum, nur Wachse mit Duftöl und Anteil)
+  const limits = mix.filter((w, i) => f[i] && ws.shares[i] > 0 && num(w.fragranceMaxPct));
   const limit = limits.length ? limits.reduce((a, b) => (b.fragranceMaxPct < a.fragranceMaxPct ? b : a)) : null;
   if (limit && p > limit.fragranceMaxPct + 1e-9)
     warnings.push(`Duftöl ${formatPct(p)} % liegt über dem Maximum von ${formatPct(limit.fragranceMaxPct)} % für ${limit.name} (Rußgefahr, verstopfter Docht).`);
@@ -97,7 +111,7 @@ export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'perce
   }));
   const outWaxes = mix.map((w, i) => {
     const g = (waxG * ws.shares[i]) / 100;
-    return { name: w.name, sharePct: ws.shares[i], g, cost: (g / 1000) * price(w.pricePerKg, w.name) };
+    return { name: w.name, sharePct: ws.shares[i], scented: !!f[i], g, cost: (g / 1000) * price(w.pricePerKg, w.name) };
   });
   const costs = {
     wax: outWaxes.reduce((a, w) => a + w.cost, 0),

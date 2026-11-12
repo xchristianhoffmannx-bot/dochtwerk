@@ -29,7 +29,7 @@ export default function costResult() {
 
   const rows = [
     resultRow(R.wax, formatEuro(r.costs.wax), r.waxes.length === 1 ? [grams(r.waxG)]
-      : r.waxes.map((w) => `${w.name} ${formatPct(w.sharePct)} %: ${grams(w.g)} · ${formatEuro(w.cost)}`)),
+      : r.waxes.map((w) => `${w.name} ${formatPct(w.sharePct)} %: ${grams(w.g)} · ${formatEuro(w.cost)}${w.scented || !r.scents.length ? '' : ' · ohne Duftöl'}`)),
   ];
   if (r.scents.length) {
     const subs = r.scents.length === 1
