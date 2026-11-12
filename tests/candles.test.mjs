@@ -152,8 +152,9 @@ test('Formular: Wachs nachträglich hinzufügen, Mischung ändern, wieder entfer
   const mix = r.next.waxMix;
   assert.deepEqual(mix.map((x) => [x.name, x.sharePct, x.scented]), [[c.wax.name, 60, true], ['Raps', 40, false]]);
   near(mix[0].grams + mix[1].grams, c.waxG);
-  near(r.next.costs.wax, mix[0].cost + mix[1].cost);
-  near(r.next.costs.total, c.costs.total + (r.next.costs.wax - c.costs.wax)); // Gesamtpreis zieht mit
+  near(r.next.costs.wax, mix[0].cost + mix[1].cost, 0.006);
+  near(r.next.costs.total, c.costs.total + (r.next.costs.wax - c.costs.wax), 0.011); // Gesamtpreis zieht mit
+  assert.equal(r.next.costs.total, Math.round(r.next.costs.total * 100) / 100); // Cent
   // erneut öffnen: Zeilen kommen zurück; in Gramm eingeben
   const again = candleFormValues(r.next, s);
   assert.equal(again.moreWaxes[0].share, '40');
@@ -163,5 +164,18 @@ test('Formular: Wachs nachträglich hinzufügen, Mischung ändern, wieder entfer
   assert.match(applyCandleForm(c, { ...raw, moreWaxes: [{ src: null, waxId: 'w2', share: '100', scented: true }] }, s).errors.waxes, /Anteile/);
   const back = applyCandleForm(r.next, { ...again, moreWaxes: [] }, s);
   assert.equal(back.next.waxMix, undefined);
-  near(back.next.costs.wax, c.costs.wax);
+  near(back.next.costs.wax, c.costs.wax, 0.006);
+});
+
+test('Wachs in der Kerze wechseln rechnet Wachs- und Gesamtkosten neu, eigener Gesamtpreis bleibt', () => {
+  const { s, c } = candleFromCost();
+  s.waxes.push({ id: 'w2', name: 'Raps', price: 30, quantityKg: 1, densityGml: 0.9 });
+  const raw = candleFormValues(c, s);
+  const sw = applyCandleForm(c, { ...raw, waxId: 'w2' }, s).next;
+  near(sw.costs.wax, (c.waxG / 1000) * 30, 0.006);
+  near(sw.costs.total, c.costs.total + sw.costs.wax - c.costs.wax, 0.011);
+  const own = applyCandleForm(c, { ...raw, waxId: 'w2', costTotal: '9' }, s).next;
+  assert.equal(own.costs.total, 9);
+  // nichts geändert -> nichts verschoben
+  assert.equal(applyCandleForm(c, raw, s).next.costs.wax, c.costs.wax);
 });

@@ -5,6 +5,7 @@ import { rund05 } from './core/calc-cost.js';
 import { toInput } from './materials.js';
 
 export const MAX_WAXES = 3;
+const round2 = (x) => Math.round(x * 100) / 100; // Kosten auf Cent
 export const KEEP = '__keep'; // Duft-/Wachs-Auswahl "gespeicherter Wert bleibt" (Material inzwischen gelöscht)
 
 export const glassSnapshot = (g) => ({
@@ -78,7 +79,7 @@ export function candleFormValues(c, state) {
     })),
     scentPct: toInput(c.scentPct),
     totalWeight: toInput(c.totalWeightG),
-    costTotal: toInput(c.costs?.total),
+    costTotal: toInput(c.costs?.total == null ? null : round2(c.costs.total)),
   };
 }
 
@@ -87,8 +88,8 @@ export function candleFormValues(c, state) {
 // Gramm und Kosten je Wachs entstehen aus waxG der Kerze. Wurde die Mischung geändert, folgen
 // costs.wax und (wenn der Gesamtpreis nicht von Hand geändert wurde) costs.total.
 function applyWaxMix(c, raw, state, next, errors, total) {
-  const rows = raw.moreWaxes.filter((r) => r.waxId);
-  if (!rows.length) {
+  const rows = (raw.moreWaxes ?? []).filter((r) => r.waxId);
+  if (!raw.moreWaxes) { /* Mischung unverändert */ } else if (!rows.length) {
     delete next.waxMix;
   } else if (!next.wax) {
     errors.wax = 'Wähle zuerst das erste Wachs.';
@@ -116,13 +117,19 @@ function applyWaxMix(c, raw, state, next, errors, total) {
     next.waxMix = [first, ...entries].map((e) => ({ ...e, grams: c.waxG > 0 ? (c.waxG * e.sharePct) / 100 : null }))
       .map((e) => ({ ...e, cost: e.grams != null ? (e.grams / 1000) * (e.pricePerKg ?? 0) : null }));
   }
-  const changed = JSON.stringify(c.waxMix ?? null) !== JSON.stringify(next.waxMix ?? null);
-  if (changed && c.waxG > 0 && (c.waxMix || next.waxMix)) {
-    const wax = next.waxMix ? next.waxMix.reduce((a, e) => a + e.cost, 0) : (c.waxG / 1000) * (next.wax?.pricePerKg ?? 0);
+  // Kosten neu berechnen, wenn sich die Wachse geändert haben (anderes Wachs, Mischung, Anteile, Duftöl-Häkchen)
+  const sig = (m, w) => JSON.stringify(m ? m.map((e) => [e.waxId, +e.sharePct.toFixed(4), e.scented !== false]) : [w?.waxId]);
+  if (c.waxG > 0 && next.wax && sig(c.waxMix, c.wax) !== sig(next.waxMix, next.wax)) {
+    if (next.waxMix) next.waxMix.forEach((e) => { e.cost = round2(e.cost); });
+    const wax = next.waxMix ? round2(next.waxMix.reduce((x, e) => x + e.cost, 0)) : round2((c.waxG / 1000) * (next.wax.pricePerKg ?? 0));
     const oldWax = c.costs?.wax ?? 0;
-    // Gesamtpreis nicht von Hand geändert -> mitziehen
+    // Gesamtpreis nicht von Hand geändert -> mitziehen (inkl. Verkaufspreis); sonst bleibt der eigene Wert
     const untouched = total != null && Math.abs(total - (c.costs?.total ?? 0)) < 0.005;
-    next.costs = { ...next.costs, wax, ...(untouched && { total: total + (wax - oldWax) }) };
+    next.costs = { ...next.costs, wax };
+    if (untouched) {
+      next.costs.total = round2(total + (wax - oldWax));
+      if (c.markup?.on) next.markup = { ...c.markup, price: rund05(next.costs.total * (1 + c.markup.pct / 100)) };
+    }
   }
 }
 
@@ -174,7 +181,7 @@ export function applyCandleForm(c, raw, state) {
   next.totalWeightG = num(raw.totalWeight, 'totalWeight');
   const total = num(raw.costTotal, 'costTotal');
   next.costs = { ...(c.costs || {}), total: total ?? 0 };
-  if (raw.moreWaxes) applyWaxMix(c, raw, state, next, errors, total);
+  applyWaxMix(c, raw, state, next, errors, total);
 
   return { ok: Object.keys(errors).length === 0, errors, next };
 }
