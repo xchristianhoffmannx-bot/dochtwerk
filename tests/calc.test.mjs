@@ -135,3 +135,12 @@ test('Wachsmischung: Anteil fehlt -> Fehler, über 100 % -> normiert', () => {
   near(r.waxes[0].sharePct, 0); near(r.waxes[1].sharePct + r.waxes[2].sharePct, 100);
   assert.match(r.warnings.join(' '), /weiteren Wachse/);
 });
+
+test('Wachsmischung in Gramm: erstes Wachs bekommt den Rest', () => {
+  const raps = { name: 'Raps', pricePerKg: 10, grams: 100 };
+  const r = calcCost({ ...base, waxes: [wax, raps], waxUnit: 'g', scents: [] });
+  near(r.waxes[1].g, 100); near(r.waxes[0].g, r.waxG - 100);
+  near(r.costs.wax, ((r.waxG - 100) * 13.36 + 100 * 10) / 1000);
+  assert.match(calcCost({ ...base, waxes: [wax, { ...raps, grams: 999 }], waxUnit: 'g', scents: [] }).errors[0], /nur/);
+  assert.match(calcCost({ ...base, waxes: [wax, { ...raps, grams: null }], waxUnit: 'g', scents: [] }).errors[0], /Menge in g/);
+});

@@ -8,7 +8,7 @@ export const blankRow = () => ({ scentId: '', share: '', ml: '' });
 
 // Zubehör-Vorauswahl = Auswahl der letzten Rechnung (Spec A2)
 export const emptyCostDraft = (state) => ({
-  glassId: '', waxId: '', moreWaxes: [], mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
+  glassId: '', waxId: '', moreWaxes: [], waxUnit: 'percent', mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
   scents: [blankRow()],
   extras: Object.fromEntries(
     (state.drafts.lastExtras || [])
@@ -62,15 +62,17 @@ export function costInput(state, d) {
     if (qty <= 0) errors.push(`Die Menge für ${x.name} muss größer als 0 sein.`);
     extras.push({ extraId: x.id, name: x.name, qty, pricePerPiece: perPiece(x) });
   }
-  const waxOf = (x, sharePct) => ({ waxId: x.id, name: x.name, pricePerKg: pricePerKg(x.price, x.quantityKg), densityGml: x.densityGml, fragranceMaxPct: x.fragranceMaxPct, sharePct });
+  const byG = d.waxUnit === 'g';
+  const waxOf = (x, v) => ({ waxId: x.id, name: x.name, pricePerKg: pricePerKg(x.price, x.quantityKg), densityGml: x.densityGml, fragranceMaxPct: x.fragranceMaxPct, sharePct: byG ? null : v, grams: byG ? v : null });
   const more = w ? (d.moreWaxes || []).filter((r) => r.waxId).flatMap((r) => {
     const x = state.waxes.find((y) => y.id === r.waxId);
-    return x ? [waxOf(x, read(r.share, `Anteil ${x.name}`, errors))] : []; // gelöschtes Wachs entfällt
+    return x ? [waxOf(x, read(r.share, `${byG ? 'Menge' : 'Anteil'} ${x.name}`, errors))] : []; // gelöschtes Wachs entfällt
   }) : [];
   const input = {
     glass: g ? { name: g.name, emptyWeightG: g.emptyWeightG, price: perPiece(g) } : null,
     wax: w ? waxOf(w, null) : null,
     waxes: w ? [waxOf(w, null), ...more] : [],
+    waxUnit: byG ? 'g' : 'percent',
     mode: d.mode,
     totalWeightG: read(d.totalWeight, 'Gesamtgewicht', errors),
     pct: d.mode === 'ml' ? null : read(d.pct, 'Duftölmenge', errors),

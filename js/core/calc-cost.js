@@ -16,16 +16,20 @@ export function resolveShares(scents) {
 
 const part = (x, total, fallback) => (total > 0 ? (x / total) * 100 : fallback);
 
-// waxes: bis zu drei Wachse, das erste bekommt den Rest, die übrigen geben sharePct an (wie bei den Düften).
+// waxes: bis zu drei Wachse, das erste bekommt den Rest, die übrigen geben sharePct (waxUnit 'percent') oder grams (waxUnit 'g') an.
 // Ohne waxes zählt das einzelne wax.
-export function calcCost({ glass, wax, waxes, mode = 'percent', totalWeightG, pct, scents = [], extras = [], markup }) {
+export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'percent', totalWeightG, pct, scents = [], extras = [], markup }) {
   const errors = [];
   const mix = waxes?.length ? waxes : wax ? [wax] : [];
   const hasEmpty = glass && num(glass.emptyWeightG) && glass.emptyWeightG > 0;
   if (!glass) errors.push('Wähle ein Glas.');
   else if (!hasEmpty) errors.push('Für dieses Glas fehlt das Leergewicht.');
   if (!mix.length) errors.push('Wähle ein Wachs.');
-  for (const w of mix.slice(1)) if (!num(w.sharePct)) errors.push(`Gib den Anteil für ${w.name} ein.`);
+  const byG = waxUnit === 'g';
+  for (const w of mix.slice(1)) {
+    if (byG && !(num(w.grams) && w.grams > 0)) errors.push(`Gib die Menge in g für ${w.name} ein.`);
+    if (!byG && !num(w.sharePct)) errors.push(`Gib den Anteil für ${w.name} ein.`);
+  }
   if (!num(totalWeightG)) errors.push('Gib das Gesamtgewicht mit Glas ein.');
   else if (hasEmpty && totalWeightG <= glass.emptyWeightG)
     errors.push(`Das Gesamtgewicht ist nicht größer als das leere Glas (${formatNumber(glass.emptyWeightG, 1)} g).`);
@@ -64,7 +68,12 @@ export function calcCost({ glass, wax, waxes, mode = 'percent', totalWeightG, pc
     rows.forEach((x) => { x.shareVolPct = part(x.ml, totalMl, x.shareMassPct); });
   }
 
-  const ws = resolveShares(mix);
+  let ws;
+  if (byG && mix.length > 1) {
+    const gSum = mix.slice(1).reduce((a, w) => a + w.grams, 0);
+    if (gSum >= waxG) return { ok: false, errors: [`Die weiteren Wachse wiegen ${formatNumber(gSum, 1)} g, das Wachs insgesamt aber nur ${formatNumber(waxG, 1)} g.`] };
+    ws = { shares: [((waxG - gSum) / waxG) * 100, ...mix.slice(1).map((w) => (w.grams / waxG) * 100)], normalized: false };
+  } else ws = resolveShares(mix);
   const warnings = [];
   if (normalized) warnings.push('Die Anteile der weiteren Düfte ergeben über 100 %, sie wurden angepasst.');
   if (ws.normalized) warnings.push('Die Anteile der weiteren Wachse ergeben über 100 %, sie wurden angepasst.');

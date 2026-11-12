@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.2.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.3.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -40,6 +40,9 @@ export const T = {
     waxN: (n) => `Wachs ${n}`,
     addWax: '+ weiteres Wachs',
     removeWax: 'Wachs entfernen',
+    waxUnit: 'Weitere Wachse angeben in',
+    waxRestG: 'Das erste Wachs bekommt den Rest.',
+    mlGramField: 'Menge (g)',
     pick: '– bitte wählen –',
     none: '– ohne –',
     glassOpt: (name, g) => (g == null ? `${name} · Leergewicht fehlt` : `${name} · leer ${g} g`),

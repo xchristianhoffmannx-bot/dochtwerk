@@ -34,8 +34,10 @@ export function waxSection(ctx, label) {
   const more = draft.moreWaxes;
   const chosen = more.filter((r) => r.waxId);
   let restEl = null;
+  const byG = draft.waxUnit === 'g';
   const updateRest = () => {
     if (!restEl) return;
+    if (byG) { restEl.textContent = C.waxRestG; return; }
     const others = chosen.reduce((a, r) => {
       const v = parseDecimal(r.share);
       return a + (Number.isFinite(v) && v > 0 ? v : 0);
@@ -56,13 +58,19 @@ export function waxSection(ctx, label) {
         onclick: () => { more.splice(i, 1); save(); rebuild(); },
       }, icon('x'))));
     if (row.waxId) {
-      wrap.append(field(C.share, textInput({
+      wrap.append(field(byG ? C.mlGramField : C.share, textInput({
         id: `wax-share-${i + 2}`, value: row.share,
         oninput: (v) => { row.share = v; save(); updateRest(); },
       })));
     }
   });
   updateRest();
+  if (more.length) {
+    wrap.append(field(C.waxUnit, selectInput({
+      id: 'wax-unit', value: byG ? 'g' : 'percent', options: [['percent', C.unitPct.replace(' vom Wachs', '')], ['g', 'g']],
+      onchange: (v) => { draft.waxUnit = v; save(); rebuild(); },
+    })));
+  }
   if (draft.waxId && more.length < MAX_WAXES - 1) {
     wrap.append(h('button', {
       class: 'link', type: 'button',
