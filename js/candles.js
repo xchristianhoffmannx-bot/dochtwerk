@@ -4,7 +4,8 @@ import { pricePerKg, pricePerMl, pricePerPiece } from './core/pricing.js';
 import { rund05 } from './core/calc-cost.js';
 import { toInput } from './materials.js';
 
-export const KEEP = '__keep'; // Duft-Auswahl "gespeicherter Wert bleibt" (Material inzwischen gelöscht)
+export const MAX_WAXES = 3;
+export const KEEP = '__keep'; // Duft-/Wachs-Auswahl "gespeicherter Wert bleibt" (Material inzwischen gelöscht)
 
 export const glassSnapshot = (g) => ({
   glassId: g.id, name: g.name, shape: g.shape, heightMm: g.heightMm, widthMm: g.widthMm,
@@ -64,6 +65,12 @@ export function candleFormValues(c, state) {
     name: c.name || '',
     glassId: c.glass?.glassId ?? '',
     waxId: c.wax?.waxId ?? '',
+    firstScented: c.waxMix?.[0]?.scented !== false,
+    waxUnit: 'percent',
+    moreWaxes: (c.waxMix || []).slice(1).map((x) => ({
+      src: x, waxId: state.waxes.some((w) => w.id === x.waxId) ? x.waxId : KEEP,
+      share: toInput(x.sharePct), scented: x.scented !== false,
+    })),
     scents: c.scents.map((s) => ({
       src: s,
       scentId: s.scentId && state.scents.some((x) => x.id === s.scentId) ? s.scentId : KEEP,
@@ -75,6 +82,50 @@ export function candleFormValues(c, state) {
   };
 }
 
+
+// Wachsmischung aus dem Formular: erstes Wachs bekommt den Rest, die weiteren geben % oder g an.
+// Gramm und Kosten je Wachs entstehen aus waxG der Kerze. Wurde die Mischung geändert, folgen
+// costs.wax und (wenn der Gesamtpreis nicht von Hand geändert wurde) costs.total.
+function applyWaxMix(c, raw, state, next, errors, total) {
+  const rows = raw.moreWaxes.filter((r) => r.waxId);
+  if (!rows.length) {
+    delete next.waxMix;
+  } else if (!next.wax) {
+    errors.wax = 'Wähle zuerst das erste Wachs.';
+  } else {
+    const byG = raw.waxUnit === 'g' && c.waxG > 0;
+    const entries = [];
+    let sum = 0, bad = false;
+    rows.forEach((r, i) => {
+      let e;
+      if (r.waxId === KEEP || (r.src && r.src.waxId === r.waxId)) e = { ...r.src };
+      else {
+        const w = state.waxes.find((x) => x.id === r.waxId);
+        e = { ...waxSnapshot(w), sharePct: null, scented: true };
+      }
+      const v = parseDecimal(String(r.share ?? ''));
+      const share = byG ? (v / c.waxG) * 100 : v;
+      if (!Number.isFinite(v) || v < 0 || share > 100) { errors[`wax-${i}`] = byG ? 'Bitte eine Menge in g eingeben.' : 'Bitte einen Anteil zwischen 0 und 100 eingeben.'; bad = true; }
+      e.sharePct = share; e.scented = r.scented !== false;
+      sum += Number.isFinite(share) ? share : 0;
+      entries.push(e);
+    });
+    if (!bad && sum >= 100) { errors.waxes = byG ? 'Die weiteren Wachse wiegen zusammen so viel wie das ganze Wachs oder mehr.' : `Die Anteile ergeben zusammen ${toInput(Math.round(sum * 10) / 10)} %, das erste Wachs hätte nichts mehr.`; bad = true; }
+    if (bad) return;
+    const first = { waxId: next.wax.waxId, name: next.wax.name, pricePerKg: next.wax.pricePerKg, densityGml: next.wax.densityGml, sharePct: 100 - sum, scented: raw.firstScented !== false };
+    next.waxMix = [first, ...entries].map((e) => ({ ...e, grams: c.waxG > 0 ? (c.waxG * e.sharePct) / 100 : null }))
+      .map((e) => ({ ...e, cost: e.grams != null ? (e.grams / 1000) * (e.pricePerKg ?? 0) : null }));
+  }
+  const changed = JSON.stringify(c.waxMix ?? null) !== JSON.stringify(next.waxMix ?? null);
+  if (changed && c.waxG > 0 && (c.waxMix || next.waxMix)) {
+    const wax = next.waxMix ? next.waxMix.reduce((a, e) => a + e.cost, 0) : (c.waxG / 1000) * (next.wax?.pricePerKg ?? 0);
+    const oldWax = c.costs?.wax ?? 0;
+    // Gesamtpreis nicht von Hand geändert -> mitziehen
+    const untouched = total != null && Math.abs(total - (c.costs?.total ?? 0)) < 0.005;
+    next.costs = { ...next.costs, wax, ...(untouched && { total: total + (wax - oldWax) }) };
+  }
+}
+
 // raw -> { ok, errors, next }; next ist eine neue Kerze (die alte bleibt unverändert)
 export function applyCandleForm(c, raw, state) {
   const errors = {};
@@ -83,7 +134,7 @@ export function applyCandleForm(c, raw, state) {
   const g = state.glasses.find((x) => x.id === raw.glassId);
   if (g && c.glass?.glassId !== g.id) next.glass = glassSnapshot(g); // Wechsel kopiert die Maße neu
   const w = state.waxes.find((x) => x.id === raw.waxId);
-  if (w && c.wax?.waxId !== w.id) { next.wax = waxSnapshot(w); delete next.waxMix; } // neues Wachs ersetzt die Mischung
+  if (w && c.wax?.waxId !== w.id) next.wax = waxSnapshot(w);
 
   const key = c.scentMode === 'ml' ? 'shareVolPct' : 'shareMassPct';
   const rows = raw.scents.map((r, i) => ({ r, i })).filter(({ r }) => r.scentId);
@@ -123,6 +174,7 @@ export function applyCandleForm(c, raw, state) {
   next.totalWeightG = num(raw.totalWeight, 'totalWeight');
   const total = num(raw.costTotal, 'costTotal');
   next.costs = { ...(c.costs || {}), total: total ?? 0 };
+  if (raw.moreWaxes) applyWaxMix(c, raw, state, next, errors, total);
 
   return { ok: Object.keys(errors).length === 0, errors, next };
 }

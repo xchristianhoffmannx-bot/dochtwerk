@@ -141,3 +141,27 @@ test('Foto-Größe: nie hochskalieren, lange Kante begrenzt', () => {
   assert.deepEqual(fitSize(3000, 4000, 400), { w: 300, h: 400 });
   assert.deepEqual(fitSize(800, 600, 2000), { w: 800, h: 600 });
 });
+
+test('Formular: Wachs nachträglich hinzufügen, Mischung ändern, wieder entfernen', () => {
+  const { s, c } = candleFromCost();
+  s.waxes.push({ id: 'w2', name: 'Raps', price: 20, quantityKg: 1, densityGml: 0.9 });
+  const raw = candleFormValues(c, s);
+  assert.deepEqual(raw.moreWaxes, []);
+  const r = applyCandleForm(c, { ...raw, moreWaxes: [{ src: null, waxId: 'w2', share: '40', scented: false }] }, s);
+  assert.ok(r.ok, JSON.stringify(r.errors));
+  const mix = r.next.waxMix;
+  assert.deepEqual(mix.map((x) => [x.name, x.sharePct, x.scented]), [[c.wax.name, 60, true], ['Raps', 40, false]]);
+  near(mix[0].grams + mix[1].grams, c.waxG);
+  near(r.next.costs.wax, mix[0].cost + mix[1].cost);
+  near(r.next.costs.total, c.costs.total + (r.next.costs.wax - c.costs.wax)); // Gesamtpreis zieht mit
+  // erneut öffnen: Zeilen kommen zurück; in Gramm eingeben
+  const again = candleFormValues(r.next, s);
+  assert.equal(again.moreWaxes[0].share, '40');
+  const g = applyCandleForm(r.next, { ...again, waxUnit: 'g', moreWaxes: [{ ...again.moreWaxes[0], share: String(c.waxG / 4) }] }, s);
+  near(g.next.waxMix[1].sharePct, 25);
+  // Summe >= 100 -> Fehler; Zeile entfernen -> wieder einzelnes Wachs
+  assert.match(applyCandleForm(c, { ...raw, moreWaxes: [{ src: null, waxId: 'w2', share: '100', scented: true }] }, s).errors.waxes, /Anteile/);
+  const back = applyCandleForm(r.next, { ...again, moreWaxes: [] }, s);
+  assert.equal(back.next.waxMix, undefined);
+  near(back.next.costs.wax, c.costs.wax);
+});

@@ -7,9 +7,10 @@ import { pickImage, processFile, UrlBag } from '../../photos.js';
 import { pickSource } from '../sheets.js';
 import { MAX_SCENTS, blankRow } from '../../calc-forms.js';
 import { missingForExport } from '../../core/candle.js';
-import { formatPct } from '../../core/units.js';
+import { parseDecimal } from '../../core/units.js';
+import { toInput } from '../../materials.js';
 import {
-  KEEP, newManualCandle, candleFormValues, applyCandleForm,
+  KEEP, MAX_WAXES, newManualCandle, candleFormValues, applyCandleForm,
   hasSide, orderedPhotos, setSide, removePhoto,
 } from '../../candles.js';
 
@@ -122,10 +123,62 @@ export default function candleDetail(id) {
     id: 'c-glass', value: raw.glassId, options: materialOptions(work.glass, 'glassId', state.glasses, K.noGlass),
     onchange: (v) => touch('glassId', v),
   });
-  const waxSelect = () => selectInput({
-    id: 'c-wax', value: raw.waxId, options: materialOptions(work.wax, 'waxId', state.waxes, K.noWax),
-    onchange: (v) => touch('waxId', v),
-  });
+  // Wachse: erstes Wachs bekommt den Rest, weitere geben % (oder g) an, je Wachs "Mit Duftöl"
+  const waxBox = h('div', { class: 'scent-block' });
+  const scentedBox = (id, get, set) => {
+    const box = h('input', { type: 'checkbox', id, class: 'check' });
+    box.checked = get();
+    box.addEventListener('change', () => set(box.checked));
+    return h('div', { class: 'extra-row' }, h('label', { for: id }, box, h('span', {}, T.cost.waxScented)));
+  };
+  function renderWaxes() {
+    waxBox.replaceChildren();
+    const more = raw.moreWaxes;
+    const byG = raw.waxUnit === 'g';
+    waxBox.append(
+      field(K.wax, selectInput({
+        id: 'c-wax', value: raw.waxId, options: materialOptions(work.wax, 'waxId', state.waxes, K.noWax),
+        onchange: (v) => { touch('waxId', v); renderWaxes(); },
+      }), errorEl('wax')));
+    if (more.length) waxBox.append(scentedBox('c-wax-scented-1', () => raw.firstScented, (v) => touch('firstScented', v)),
+      h('p', { class: 'rest' }, byG ? T.cost.waxRestG : T.cost.waxRestHint));
+    more.forEach((row, i) => {
+      const deleted = row.src && !state.waxes.some((w) => w.id === row.src.waxId);
+      const options = [['', T.cost.none], ...(deleted ? [[KEEP, `${row.src.name}${K.keepSuffix}`]] : []), ...state.waxes.map((w) => [w.id, w.name])];
+      waxBox.append(
+        h('div', { class: 'scent-row' },
+          field(T.cost.waxN(i + 2), selectInput({
+            id: `c-wax-${i + 2}`, options, value: row.waxId,
+            onchange: (v) => { row.waxId = v; touch('moreWaxes', more); renderWaxes(); },
+          })),
+          h('button', {
+            class: 'icon-btn', type: 'button', 'aria-label': T.cost.removeWax,
+            onclick: () => { more.splice(i, 1); touch('moreWaxes', more); renderWaxes(); },
+          }, icon('x'))),
+        row.waxId && scentedBox(`c-wax-scented-${i + 2}`, () => row.scented, (v) => { row.scented = v; touch('moreWaxes', more); }),
+        row.waxId && field(byG ? T.cost.mlGramField : T.cost.share, textInput({ id: `c-wax-share-${i + 2}`, value: row.share, oninput: (v) => { row.share = v; touch('moreWaxes', more); } }), errorEl(`wax-${i}`)));
+    });
+    if (more.length && work.waxG > 0) {
+      waxBox.append(field(T.cost.waxUnit, selectInput({
+        id: 'c-wax-unit', value: byG ? 'g' : 'percent', options: [['percent', '%'], ['g', 'g']],
+        onchange: (v) => {
+          // eingetragene Werte mitrechnen, damit sie dieselbe Menge bedeuten
+          for (const row of more) {
+            const x = parseDecimal(row.share);
+            if (Number.isFinite(x)) row.share = toInput(Math.round((v === 'g' ? (x * work.waxG) / 100 : (x / work.waxG) * 100) * 10) / 10);
+          }
+          raw.waxUnit = v; dirty = true; renderWaxes();
+        },
+      })));
+    }
+    if ((raw.waxId || work.wax) && more.length < MAX_WAXES - 1) {
+      waxBox.append(h('button', {
+        class: 'link', type: 'button',
+        onclick: () => { more.push({ src: null, waxId: '', share: '', scented: true }); touch('moreWaxes', more); renderWaxes(); },
+      }, T.cost.addWax));
+    }
+    waxBox.append(errorEl('waxes'));
+  }
 
   const scentBox = h('div', { class: 'scent-block' });
   function renderScents() {
@@ -168,12 +221,12 @@ export default function candleDetail(id) {
     location.hash = '#/galerie';
   });
 
+  renderWaxes();
   renderScents();
   form.append(
     text('name', K.name.replace(' (optional)', ''), { inputmode: 'text' }),
     field(K.glass, glassSelect()),
-    field(K.wax, waxSelect()),
-    work.waxMix && h('p', { class: 'hint' }, K.waxMix(work.waxMix.map((x) => `${x.name} ${formatPct(x.sharePct)} %`).join(', '))),
+    waxBox,
     scentBox,
     text('scentPct', K.scentPct),
     text('totalWeight', K.weight),

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.4.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.5.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -42,6 +42,7 @@ export const T = {
     removeWax: 'Wachs entfernen',
     waxUnit: 'Weitere Wachse angeben in',
     waxScented: 'Mit Duftöl',
+    waxRestHint: 'Das erste Wachs bekommt den Rest.',
     waxRestG: 'Das erste Wachs bekommt den Rest.',
     mlGramField: 'Menge (g)',
     pick: '– bitte wählen –',
@@ -148,7 +149,6 @@ export const T = {
     sideBadge: 'Seitenansicht',
     glass: 'Glas',
     wax: 'Wachs',
-    waxMix: (list) => `Wachsmischung: ${list}. Wählst du hier ein anderes Wachs, ersetzt es die Mischung.`,
     scents: 'Düfte',
     share: 'Anteil (%)',
     keepSuffix: ' (gespeichert)',
