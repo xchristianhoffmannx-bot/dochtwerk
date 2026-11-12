@@ -31,6 +31,18 @@ export default function cost() {
       !state.glasses.length && h('p', { class: 'hint' }, h('a', { href: '#/material/glaeser/neu' }, C.createGlass))), toggle);
   }
 
+  // Duftöl-Bereich nur bei Bedarf: "Ohne Duftöl" blendet Duftauswahl und Menge aus
+  function scentToggle() {
+    const opt = (noScent, label) => {
+      const r = h('input', { type: 'radio', name: 'scent-use', value: noScent ? 'no' : 'yes' });
+      r.checked = !!draft.noScent === noScent;
+      r.addEventListener('change', () => { draft.noScent = noScent; save(); build(); });
+      return h('label', {}, r, h('span', {}, label));
+    };
+    return h('div', { class: 'field' }, h('div', { class: 'field-label' }, C.scentUse),
+      h('div', { class: 'seg', role: 'radiogroup', 'aria-label': C.scentUse }, opt(false, C.withScent), opt(true, C.withoutScent)));
+  }
+
   function extrasBlock() {
     const wrap = h('div', { class: 'field' }, h('div', { class: 'field-label' }, C.extras));
     if (!state.extras.length) {
@@ -50,11 +62,29 @@ export default function cost() {
     return wrap;
   }
 
+  // Fehler dem Feld zuordnen: markieren und zum ersten fehlerhaften Feld springen
+  const FIELD_OF = [[/Gesamtgewicht/, 'weight'], [/Glas|Leergewicht/, 'glass'], [/Wachsmenge/, 'wax-amount'],
+    [/Wähle ein Wachs/, 'wax'], [/Duftölmenge/, 'pct'], [/Anteil für|Menge in g für/, null]];
+  function markInvalid(list) {
+    let first = null;
+    for (const msg of list) {
+      const hit = FIELD_OF.find(([re]) => re.test(msg));
+      const id = hit?.[1];
+      const el = id && document.getElementById(id);
+      if (!el) continue;
+      el.classList.add('invalid'); el.setAttribute('aria-invalid', 'true');
+      first ||= el;
+    }
+    if (first) { first.scrollIntoView({ block: 'center' }); first.focus({ preventScroll: true }); }
+  }
+
   function calculate(box) {
     const { input, errors } = costInput(state, draft);
     const r = errors.length ? { ok: false, errors } : calcCost(input);
     box.replaceChildren();
+    form.querySelectorAll('[aria-invalid]').forEach((el) => { el.removeAttribute('aria-invalid'); el.classList.remove('invalid'); });
     if (!r.ok) {
+      markInvalid(r.errors);
       r.errors.forEach((msg) => box.append(h('p', { class: 'msg msg-error' }, msg, ' ',
         /Leergewicht/.test(msg) && draft.glassId && h('a', { href: `#/material/glaeser/${draft.glassId}` }, C.editGlass))));
       return;
@@ -66,16 +96,18 @@ export default function cost() {
   function build() {
     const msgs = h('div', { 'aria-live': 'polite' });
     form.replaceChildren(
+      h('h2', { class: 'section-title' }, C.basics),
       glassField(),
       waxSection(ctx, C.wax),
-      scentSection(ctx),
       draft.noGlass
         ? field(C.waxAmount, textInput({ id: 'wax-amount', value: draft.waxAmount, oninput: (v) => { draft.waxAmount = v; save(); } }), h('p', { class: 'hint' }, C.waxAmountHint))
         : field(C.weight, textInput({ id: 'weight', value: draft.totalWeight, oninput: (v) => { draft.totalWeight = v; save(); } })),
-      amountRow(ctx),
+      h('h2', { class: 'section-title' }, C.scentAndExtras),
+      scentToggle(),
+      ...(draft.noScent ? [] : [scentSection(ctx), amountRow(ctx)]),
       extrasBlock(),
       msgs,
-      h('button', { class: 'btn btn-primary', type: 'button', onclick: () => calculate(msgs) }, icon('calculator'), C.calc),
+      h('button', { class: 'btn btn-primary sticky-action', type: 'button', onclick: () => calculate(msgs) }, icon('calculator'), C.calc),
       h('button', {
         class: 'link', type: 'button',
         // in place zurücksetzen: draft bleibt dasselbe Objekt wie in state.drafts.cost

@@ -2,7 +2,7 @@
 import { h, field, selectInput, textInput, confirmDialog, sheet, toast } from '../components.js';
 import { icon } from '../icons.js';
 import { T } from '../../texts.js';
-import { getState, commit, getPhoto, putPhoto, deletePhoto, requestPersist } from '../../store.js';
+import { getState, commit, save as saveNow, getPhoto, putPhoto, deletePhoto, requestPersist } from '../../store.js';
 import { pickImage, processFile, UrlBag } from '../../photos.js';
 import { pickSource } from '../sheets.js';
 import { MAX_SCENTS, blankRow } from '../../calc-forms.js';
@@ -209,12 +209,18 @@ export default function candleDetail(id) {
   }
 
   const form = h('form', { class: 'form', novalidate: true });
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const r = applyCandleForm(work, raw, state);
     showErrors(r.errors);
     if (!r.ok) { form.querySelector('.field-error:not(:empty)')?.scrollIntoView({ block: 'center' }); return; }
+    const before = stored ? { ...stored } : null;
     commit(() => (stored ? Object.assign(stored, r.next) : state.candles.push(r.next)));
+    try { await saveNow(); } catch {
+      commit(() => { if (stored) { for (const k of Object.keys(stored)) delete stored[k]; Object.assign(stored, before); } else state.candles.splice(state.candles.indexOf(r.next), 1); });
+      toast(K.saveFailed);
+      return;
+    }
     saved = true;
     dirty = false;
     toast(T.material.saved);

@@ -8,7 +8,7 @@ export const blankRow = () => ({ scentId: '', share: '', ml: '' });
 
 // Zubehör-Vorauswahl = Auswahl der letzten Rechnung (Spec A2)
 export const emptyCostDraft = (state) => ({
-  glassId: '', noGlass: false, waxAmount: '', waxId: '', moreWaxes: [], firstScented: true, waxUnit: 'percent', mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
+  glassId: '', noGlass: false, noScent: false, waxAmount: '', waxId: '', moreWaxes: [], firstScented: true, waxUnit: 'percent', mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
   scents: [blankRow()],
   extras: Object.fromEntries(
     (state.drafts.lastExtras || [])
@@ -77,8 +77,8 @@ export function costInput(state, d) {
     waxUnit: byG ? 'g' : 'percent',
     mode: d.mode,
     totalWeightG: d.noGlass ? null : read(d.totalWeight, 'Gesamtgewicht', errors),
-    pct: d.mode === 'ml' ? null : read(d.pct, 'Duftölmenge', errors),
-    scents: scentsOf(state, d, errors),
+    pct: d.mode === 'ml' || d.noScent ? null : read(d.pct, 'Duftölmenge', errors),
+    scents: d.noScent ? [] : scentsOf(state, d, errors), // "Ohne Duftöl"
     extras,
     markup: { on: state.settings.markupOn, pct: state.settings.markupPct },
   };

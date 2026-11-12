@@ -44,7 +44,9 @@ export function snapshotCandle({ state, draft, input, result, name, now = new Da
     totalWeightG: input.totalWeightG, waxG: result.waxG, scentG: result.scentG,
     extras: input.extras.map((e) => ({ extraId: e.extraId, name: e.name, qty: e.qty, pricePerPiece: e.pricePerPiece })),
     costs: { ...result.costs },
-    markup: { on: s.markupOn, pct: s.markupPct, price: s.markupOn ? rund05(result.costs.total * (1 + s.markupPct / 100)) : null },
+    // Verkaufspreis nur aus vollständigen Kosten (sonst wirkt eine Teilsumme wie ein Preis)
+    ...(result.incomplete && { costsIncomplete: true }),
+    markup: { on: s.markupOn, pct: s.markupPct, price: s.markupOn && !result.incomplete ? rund05(result.costs.total * (1 + s.markupPct / 100)) : null },
     photos: [],
   };
 }

@@ -2,6 +2,7 @@
   --bg: #faf7f2;
   --surface: #fffefd;
   --border: #e8dfe2;
+  --input-border: #9a858f; /* 3,2:1 zur Creme, damit Eingabefelder erkennbar sind */
   --accent: #8c3158;
   --accent-contrast: #ffffff;
   --result-bg: #f3e4eb;

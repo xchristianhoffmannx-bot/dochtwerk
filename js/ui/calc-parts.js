@@ -39,7 +39,7 @@ export function waxSection(ctx, label) {
     box.addEventListener('change', () => { set(box.checked); save(); });
     return h('div', { class: 'extra-row' }, h('label', { for: id }, box, h('span', {}, C.waxScented)));
   };
-  if (draft.waxId) wrap.append(scentedBox('wax-scented-1', () => draft.firstScented !== false, (v) => { draft.firstScented = v; }));
+  if (draft.waxId && !draft.noScent) wrap.append(scentedBox('wax-scented-1', () => draft.firstScented !== false, (v) => { draft.firstScented = v; }));
   const chosen = more.filter((r) => r.waxId);
   let restEl = null;
   const byG = draft.waxUnit === 'g';
@@ -66,7 +66,7 @@ export function waxSection(ctx, label) {
         onclick: () => { more.splice(i, 1); save(); rebuild(); },
       }, icon('x'))));
     if (row.waxId) {
-      wrap.append(scentedBox(`wax-scented-${i + 2}`, () => row.scented !== false, (v) => { row.scented = v; }));
+      if (!draft.noScent) wrap.append(scentedBox(`wax-scented-${i + 2}`, () => row.scented !== false, (v) => { row.scented = v; }));
       wrap.append(field(byG ? C.mlGramField : C.share, textInput({
         id: `wax-share-${i + 2}`, value: row.share,
         oninput: (v) => { row.share = v; save(); updateRest(); },

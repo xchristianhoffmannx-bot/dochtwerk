@@ -3,7 +3,7 @@ import { h, confirmDialog, toast } from '../components.js';
 import { icon } from '../icons.js';
 import { T, APP_VERSION } from '../../texts.js';
 import { mergeLegacy, isLegacy } from '../../core/legacy-import.js';
-import { getState, commit, getPhoto, putPhoto, clearPhotos, replaceState, requestPersist } from '../../store.js';
+import { getState, commit, getPhoto, restoreAll, requestPersist } from '../../store.js';
 import { download, pickImage, rebuildRecord } from '../../photos.js';
 import { buildBackupZip, parseBackup, dateStamp } from '../../core/backup.js';
 import { formatNumber } from '../../core/units.js';
@@ -37,9 +37,7 @@ export default function data() {
       for (const p of parsed.photos) {
         recs.push([p.id, await rebuildRecord(new Blob([p.data], { type: 'image/jpeg' }), meta.get(p.id) ?? new Date().toISOString())]);
       }
-      await clearPhotos();
-      for (const [id, rec] of recs) await putPhoto(id, rec);
-      replaceState(parsed.state);
+      await restoreAll(parsed.state, recs); // alles oder nichts
       say(D.restored(parsed.state.candles.length, recs.length));
     } catch { say(D.invalid, 'error'); }
   }

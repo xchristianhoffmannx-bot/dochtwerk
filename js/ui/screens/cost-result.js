@@ -1,7 +1,7 @@
 import { h, field, switchInput, textInput, toast } from '../components.js';
 import { icon } from '../icons.js';
 import { T } from '../../texts.js';
-import { getState, commit, putPhoto, requestPersist } from '../../store.js';
+import { getState, commit, save as saveNow, putPhoto, requestPersist } from '../../store.js';
 import { pickImage, processFile } from '../../photos.js';
 import { askName } from '../sheets.js';
 import { snapshotCandle } from '../../candles.js';
@@ -43,8 +43,10 @@ export default function costResult() {
   const mlGiven = input.mode === 'ml' ? formatNumber(input.scents.reduce((a, s) => a + s.ml, 0), 1) : null;
 
   const card = h('div', { class: 'result' },
-    h('div', { class: 'result-head' }, R.head, r.incomplete && ` · ${R.incomplete}`),
-    h('div', { class: 'result-sum' }, formatEuro(r.costs.total)),
+    h('div', { class: 'result-head' }, r.incomplete ? R.headKnown : R.head),
+    // ohne jeden Preis nicht "0,00 €" groß zeigen
+    h('div', { class: r.incomplete && r.costs.total === 0 ? 'result-sum result-sum-missing' : 'result-sum' },
+      r.incomplete && r.costs.total === 0 ? R.priceMissing : formatEuro(r.costs.total)),
     ...rows);
 
   const metrics = h('div', { class: 'metrics' },
@@ -59,7 +61,8 @@ export default function costResult() {
     markupBody.hidden = !s.markupOn;
     const pct = parseDecimal(String(s.markupPct));
     priceBox.replaceChildren(
-      Number.isFinite(pct) && s.markupOn
+      r.incomplete && s.markupOn ? h('p', { class: 'msg msg-warn' }, R.noMarkup)
+      : Number.isFinite(pct) && s.markupOn
         ? h('div', {}, h('div', { class: 'metric-label' }, R.price),
           h('div', { class: 'price-value' }, formatEuro(rund05(r.costs.total * (1 + pct / 100)))),
           h('div', { class: 'metric-label' }, R.priceHint))
@@ -82,7 +85,13 @@ export default function costResult() {
   refresh();
 
   // Speichern-Ablauf (Spec 6.5): Foto -> Name/Rolle -> Kerze mit Snapshot -> Galerie
+  let saving = false;
   async function save(withPhoto) {
+    if (saving) return;
+    saving = true;
+    try { await doSave(withPhoto); } finally { saving = false; }
+  }
+  async function doSave(withPhoto) {
     let rec = null;
     if (withPhoto) {
       const file = await pickImage(true);
@@ -99,7 +108,13 @@ export default function costResult() {
       candle.photos.push({ id: pid, role: ask.side ? 'side' : 'other', createdAt: rec.createdAt });
       requestPersist();
     }
+    // erst melden und weiterspringen, wenn die Kerze wirklich geschrieben ist
     commit(() => state.candles.push(candle));
+    try { await saveNow(); } catch {
+      commit(() => state.candles.splice(state.candles.indexOf(candle), 1));
+      toast(T.candle.saveFailed);
+      return;
+    }
     toast(T.candle.saved);
     location.hash = `#/galerie/${candle.id}`;
   }

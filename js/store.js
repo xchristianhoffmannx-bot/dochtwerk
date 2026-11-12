@@ -75,6 +75,31 @@ export const deletePhoto = (id) => photoTx('readwrite', (s) => s.delete(id));
 
 export const clearPhotos = () => photoTx('readwrite', (s) => s.clear());
 
+// Sofort schreiben und abwarten (für "Kerze gespeichert"): erst nach dem Abschluss der IndexedDB-Transaktion erfüllt.
+// Schlägt es fehl, bleibt der Zustand "ungespeichert" und der Fehler wird weitergereicht.
+export async function save() {
+  clearTimeout(timer);
+  if (!db) { errorHandler(); throw new Error('Kein Speicher verfügbar'); }
+  dirty = false;
+  try { await write(); } catch (e) { dirty = true; errorHandler(); throw e; }
+}
+
+// Wiederherstellen in EINER Transaktion: Fotos und Zustand ersetzen sich gemeinsam oder gar nicht.
+// recs: [[id, record], ...]. Erst danach wird das lebende Zustandsobjekt (Screens halten Referenzen) ersetzt.
+export async function restoreAll(next, recs) {
+  if (!db) throw new Error('Kein Speicher verfügbar');
+  const tx = db.transaction(['kv', 'photos'], 'readwrite');
+  const photos = tx.objectStore('photos');
+  photos.clear();
+  for (const [id, rec] of recs) photos.put(rec, id);
+  tx.objectStore('kv').put(next, 'state');
+  await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = tx.onabort = () => rej(tx.error); });
+  clearTimeout(timer);
+  dirty = false;
+  for (const k of Object.keys(state)) delete state[k];
+  Object.assign(state, next);
+}
+
 // Wiederherstellen: Objekt bleibt dasselbe (Screens halten Referenzen), Inhalt wird ersetzt
 export function replaceState(next) {
   commit((s) => { for (const k of Object.keys(s)) delete s[k]; Object.assign(s, next); });

@@ -33,12 +33,13 @@ export default function gallery() {
   const screen = h('section', { class: 'screen' },
     h('h1', { class: 'screen-title' }, G.title),
     h('p', { class: 'subtitle' }, G.sub),
-    list.length ? h('div', { class: 'gallery-grid' }, list.map(card)) : h('p', { class: 'empty' }, G.empty),
-    h('div', { class: 'stack' },
+    // Aktionen vor dem Raster, damit sie bei großer Sammlung nicht nach unten wandern
+    h('div', { class: 'stack gallery-actions' },
       h('a', { class: 'btn btn-primary', href: '#/galerie/neu' }, icon('plus'), G.add),
       hasPhotos
         ? h('a', { class: 'btn btn-secondary', href: '#/galerie/diashow' }, icon('play'), G.slideshow)
-        : h('button', { class: 'btn btn-secondary', type: 'button', disabled: true }, icon('play'), G.slideshow)));
+        : h('button', { class: 'btn btn-secondary', type: 'button', disabled: true }, icon('play'), G.slideshow)),
+    list.length ? h('div', { class: 'gallery-grid' }, list.map(card)) : h('p', { class: 'empty' }, G.empty));
 
   screen.destroy = () => { gone = true; bag.freeAll(); };
   return screen;

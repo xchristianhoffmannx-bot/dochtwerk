@@ -27,6 +27,7 @@ export function startRouter(routes, root) {
       if (!m) continue;
       current?.destroy?.(); // Screen räumt auf (Object-URLs, Tastatur-Handler)
       root.replaceChildren();
+      document.body.classList.toggle('is-sub', path !== '/'); // Unterseiten: kompakter Markenkopf
       if (path !== '/') {
         root.append(h('a', { class: 'back', href: `#${parentOf(path)}` }, icon('arrow-left'), T.back));
       }

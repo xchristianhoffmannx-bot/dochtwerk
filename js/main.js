@@ -1,5 +1,6 @@
 import { startRouter } from './router.js';
 import { h } from './ui/components.js';
+import { icon } from './ui/icons.js';
 import { T } from './texts.js';
 import { loadStore, onSaveError, requestPersist } from './store.js';
 import start from './ui/screens/start.js';
@@ -35,6 +36,27 @@ onSaveError(() => {
   banner.replaceChildren(T.saveFailed + ' ', h('a', { href: '#/daten' }, T.saveFailedLink));
   banner.hidden = false;
 });
+
+// Untere Leiste: Start · Rechner · Materialien · Galerie
+const TABS = [
+  ['#/', 'home', T.nav.start, (p) => p === '/'],
+  ['#/kosten', 'calculator', T.nav.calc, (p) => p.startsWith('/kosten') || p === '/rechner'],
+  ['#/material/glaeser', 'box', T.nav.material, (p) => p.startsWith('/material')],
+  ['#/galerie', 'images', T.nav.gallery, (p) => p.startsWith('/galerie')],
+];
+const tabbar = h('nav', { class: 'tabbar', 'aria-label': T.nav.label },
+  ...TABS.map(([href, ic, label]) => h('a', { href }, icon(ic), h('span', {}, label))));
+document.body.append(tabbar);
+const markTab = () => {
+  const p = location.hash.slice(1) || '/';
+  [...tabbar.children].forEach((a, i) => {
+    const on = TABS[i][3](p);
+    a.classList.toggle('on', on);
+    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+};
+addEventListener('hashchange', markTab);
+markTab();
 
 await loadStore();
 requestPersist();

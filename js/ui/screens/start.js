@@ -34,7 +34,6 @@ export default function start() {
 
   return h('section', { class: 'screen' },
     h('h1', { class: 'screen-title', style: 'margin-top:28px' }, S.title),
-    h('p', { class: 'subtitle' }, S.sub),
     h('a', { class: 'tile tile-hero', href: '#/kosten' },
       h('div', {}, h('h2', { class: 'tile-title' }, S.cost.title), h('p', { class: 'tile-desc' }, S.cost.desc)),
       icon('calculator')),
