@@ -8,7 +8,7 @@ export const blankRow = () => ({ scentId: '', share: '', ml: '' });
 
 // Zubehör-Vorauswahl = Auswahl der letzten Rechnung (Spec A2)
 export const emptyCostDraft = (state) => ({
-  glassId: '', waxId: '', moreWaxes: [], firstScented: true, waxUnit: 'percent', mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
+  glassId: '', noGlass: false, waxAmount: '', waxId: '', moreWaxes: [], firstScented: true, waxUnit: 'percent', mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
   scents: [blankRow()],
   extras: Object.fromEntries(
     (state.drafts.lastExtras || [])
@@ -69,12 +69,14 @@ export function costInput(state, d) {
     return x ? [waxOf(x, read(r.share, `${byG ? 'Menge' : 'Anteil'} ${x.name}`, errors), r.scented !== false)] : []; // gelöschtes Wachs entfällt
   }) : [];
   const input = {
-    glass: g ? { name: g.name, emptyWeightG: g.emptyWeightG, price: perPiece(g) } : null,
+    noGlass: !!d.noGlass,
+    waxAmountG: d.noGlass ? read(d.waxAmount, 'Wachsmenge', errors) : null,
+    glass: g && !d.noGlass ? { name: g.name, emptyWeightG: g.emptyWeightG, price: perPiece(g) } : null,
     wax: w ? waxOf(w, null) : null,
     waxes: w ? [waxOf(w, null, d.firstScented !== false), ...more] : [],
     waxUnit: byG ? 'g' : 'percent',
     mode: d.mode,
-    totalWeightG: read(d.totalWeight, 'Gesamtgewicht', errors),
+    totalWeightG: d.noGlass ? null : read(d.totalWeight, 'Gesamtgewicht', errors),
     pct: d.mode === 'ml' ? null : read(d.pct, 'Duftölmenge', errors),
     scents: scentsOf(state, d, errors),
     extras,

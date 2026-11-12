@@ -18,11 +18,13 @@ const part = (x, total, fallback) => (total > 0 ? (x / total) * 100 : fallback);
 
 // waxes: bis zu drei Wachse, das erste bekommt den Rest, die übrigen geben sharePct (waxUnit 'percent') oder grams (waxUnit 'g') an.
 // Ohne waxes zählt das einzelne wax.
-export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'percent', totalWeightG, pct, scents = [], extras = [], markup }) {
+// noGlass (Figur): keine Glas- und Gewichtsprüfung, waxAmountG = reines Wachs, Duftöl kommt obendrauf.
+export function calcCost({ glass, noGlass = false, waxAmountG, wax, waxes, waxUnit = 'percent', mode = 'percent', totalWeightG, pct, scents = [], extras = [], markup }) {
   const errors = [];
   const mix = waxes?.length ? waxes : wax ? [wax] : [];
   const hasEmpty = glass && num(glass.emptyWeightG) && glass.emptyWeightG > 0;
-  if (!glass) errors.push('Wähle ein Glas.');
+  if (noGlass) { if (!(num(waxAmountG) && waxAmountG > 0)) errors.push('Gib die Wachsmenge in g ein.'); }
+  else if (!glass) errors.push('Wähle ein Glas.');
   else if (!hasEmpty) errors.push('Für dieses Glas fehlt das Leergewicht.');
   if (!mix.length) errors.push('Wähle ein Wachs.');
   const byG = waxUnit === 'g';
@@ -30,7 +32,7 @@ export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'perce
     if (byG && !(num(w.grams) && w.grams > 0)) errors.push(`Gib die Menge in g für ${w.name} ein.`);
     if (!byG && !num(w.sharePct)) errors.push(`Gib den Anteil für ${w.name} ein.`);
   }
-  if (!num(totalWeightG)) errors.push('Gib das Gesamtgewicht mit Glas ein.');
+  if (noGlass) { /* kein Gesamtgewicht */ } else if (!num(totalWeightG)) errors.push('Gib das Gesamtgewicht mit Glas ein.');
   else if (hasEmpty && totalWeightG <= glass.emptyWeightG)
     errors.push(`Das Gesamtgewicht ist nicht größer als das leere Glas (${formatNumber(glass.emptyWeightG, 1)} g).`);
   for (const s of scents) {
@@ -40,7 +42,7 @@ export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'perce
   if (mode !== 'ml' && scents.length && !num(pct)) errors.push('Gib die Duftölmenge ein.');
   if (errors.length) return { ok: false, errors };
 
-  const inner = totalWeightG - glass.emptyWeightG;
+  const inner = noGlass ? null : totalWeightG - glass.emptyWeightG;
   // Duftöl-% bezieht sich auf das Wachs MIT Duftöl. Gramm davon = ka * waxG + kb.
   const f = mix.map((w) => (w.scented === false ? 0 : 1));
   if (scents.length && !f.includes(1)) return { ok: false, errors: ['Mindestens ein Wachs muss Duftöl bekommen.'] };
@@ -58,12 +60,12 @@ export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'perce
   if (mode === 'ml') {
     rows = scents.map((s) => ({ ml: s.ml, g: s.ml * s.densityGml }));
     scentG = rows.reduce((x, r) => x + r.g, 0);
-    if (scentG >= inner) return { ok: false, errors: ['Das Duftöl wiegt mehr als der Kerzeninhalt.'] };
-    waxG = inner - scentG;
+    if (!noGlass && scentG >= inner) return { ok: false, errors: ['Das Duftöl wiegt mehr als der Kerzeninhalt.'] };
+    waxG = noGlass ? waxAmountG : inner - scentG;
   } else {
     p = scents.length ? pct : 0;
-    waxG = (inner - (p / 100) * kb) / (1 + (p / 100) * ka);
-    scentG = inner - waxG;
+    waxG = noGlass ? waxAmountG : (inner - (p / 100) * kb) / (1 + (p / 100) * ka);
+    scentG = noGlass ? (p / 100) * (ka * waxG + kb) : inner - waxG;
   }
   if (byG && mix.length > 1) {
     if (gSum >= waxG) return { ok: false, errors: [`Die weiteren Wachse wiegen ${formatNumber(gSum, 1)} g, das Wachs insgesamt aber nur ${formatNumber(waxG, 1)} g.`] };
@@ -116,12 +118,12 @@ export function calcCost({ glass, wax, waxes, waxUnit = 'percent', mode = 'perce
   const costs = {
     wax: outWaxes.reduce((a, w) => a + w.cost, 0),
     scent: outScents.reduce((a, s) => a + s.cost, 0),
-    glass: price(glass.price, glass.name || 'Glas'),
+    glass: noGlass ? 0 : price(glass.price, glass.name || 'Glas'),
     extras: extras.reduce((a, x) => a + x.qty * price(x.pricePerPiece, x.name), 0),
   };
   costs.total = costs.wax + costs.scent + costs.glass + costs.extras;
 
   const sellPrice = markup && markup.on ? rund05(costs.total * (1 + markup.pct / 100)) : null;
 
-  return { ok: true, innerG: inner, waxG, waxes: outWaxes, scentG, scentPct: p, scents: outScents, costs, price: sellPrice, warnings, incomplete };
+  return { ok: true, noGlass, innerG: noGlass ? waxG + scentG : inner, waxG, waxes: outWaxes, scentG, scentPct: p, scents: outScents, costs, price: sellPrice, warnings, incomplete };
 }

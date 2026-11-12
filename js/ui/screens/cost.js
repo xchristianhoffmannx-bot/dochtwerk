@@ -17,13 +17,18 @@ export default function cost() {
   const ctx = { state, draft, save, rebuild: () => keepScroll(build), onInput: () => {} };
 
   function glassField() {
+    const none = h('input', { type: 'checkbox', id: 'no-glass', class: 'check' });
+    none.checked = !!draft.noGlass;
+    none.addEventListener('change', () => { draft.noGlass = none.checked; save(); build(); });
+    const toggle = h('div', { class: 'extra-row' }, h('label', { for: 'no-glass' }, none, h('span', {}, C.noGlass)));
+    if (draft.noGlass) return toggle;
     const select = selectInput({
       id: 'glass', value: draft.glassId,
       options: [['', C.pick], ...state.glasses.map((g) => [g.id, C.glassOpt(g.name, g.emptyWeightG > 0 ? formatNumber(g.emptyWeightG, 1) : null)])],
       onchange: (v) => { draft.glassId = v; save(); },
     });
-    return field(C.glass, select,
-      !state.glasses.length && h('p', { class: 'hint' }, h('a', { href: '#/material/glaeser/neu' }, C.createGlass)));
+    return h('div', {}, field(C.glass, select,
+      !state.glasses.length && h('p', { class: 'hint' }, h('a', { href: '#/material/glaeser/neu' }, C.createGlass))), toggle);
   }
 
   function extrasBlock() {
@@ -64,7 +69,9 @@ export default function cost() {
       glassField(),
       waxSection(ctx, C.wax),
       scentSection(ctx),
-      field(C.weight, textInput({ id: 'weight', value: draft.totalWeight, oninput: (v) => { draft.totalWeight = v; save(); } })),
+      draft.noGlass
+        ? field(C.waxAmount, textInput({ id: 'wax-amount', value: draft.waxAmount, oninput: (v) => { draft.waxAmount = v; save(); } }), h('p', { class: 'hint' }, C.waxAmountHint))
+        : field(C.weight, textInput({ id: 'weight', value: draft.totalWeight, oninput: (v) => { draft.totalWeight = v; save(); } })),
       amountRow(ctx),
       extrasBlock(),
       msgs,

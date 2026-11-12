@@ -6,7 +6,7 @@ export function missingForExport(c) {
   if (!(c.photos || []).some((p) => p.role === 'side')) out.push('Seitenansicht fehlt');
   if (!String(c.name ?? '').trim()) out.push('Name fehlt');
   const g = c.glass;
-  if (!g || !pos(g.heightMm) || !pos(g.widthMm)) out.push('Glas fehlt');
+  if (!c.noGlass && (!g || !pos(g.heightMm) || !pos(g.widthMm))) out.push('Glas fehlt');
   if (!(c.scents || []).some((s) => String(s.name ?? '').trim())) out.push('Duft fehlt');
   return out;
 }

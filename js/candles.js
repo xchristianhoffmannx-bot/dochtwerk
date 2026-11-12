@@ -20,14 +20,15 @@ export const waxSnapshot = (w) => ({
 
 // Kerze aus einer Kostenrechnung (Spec 4: Preise, Gewichte und Maße werden kopiert)
 export function snapshotCandle({ state, draft, input, result, name, now = new Date() }) {
-  const g = state.glasses.find((x) => x.id === draft.glassId);
+  const g = input.noGlass ? null : state.glasses.find((x) => x.id === draft.glassId);
   const w = state.waxes.find((x) => x.id === draft.waxId);
   const s = state.settings;
   return {
     id: crypto.randomUUID(),
     name: (name || '').trim(),
     createdAt: now.toISOString(),
-    glass: { ...glassSnapshot(g), price: input.glass.price },
+    glass: g ? { ...glassSnapshot(g), price: input.glass.price } : null,
+    ...(input.noGlass && { noGlass: true }), // Figur ohne Glas
     wax: { ...waxSnapshot(w), pricePerKg: input.wax.pricePerKg },
     // nur bei Mischungen: alle Wachse mit Anteil, Gramm und Kosten (wax bleibt das erste)
     ...(result.waxes.length > 1 && {
@@ -139,7 +140,7 @@ export function applyCandleForm(c, raw, state) {
   const next = { ...c, name: raw.name.trim() };
 
   const g = state.glasses.find((x) => x.id === raw.glassId);
-  if (g && c.glass?.glassId !== g.id) next.glass = glassSnapshot(g); // Wechsel kopiert die Maße neu
+  if (g && c.glass?.glassId !== g.id) { next.glass = glassSnapshot(g); delete next.noGlass; } // Wechsel kopiert die Maße neu
   const w = state.waxes.find((x) => x.id === raw.waxId);
   if (w && c.wax?.waxId !== w.id) next.wax = waxSnapshot(w);
 

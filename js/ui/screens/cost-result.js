@@ -37,7 +37,7 @@ export default function costResult() {
       : r.scents.map((s) => `${s.name}: ${grams(s.g)} · ${formatNumber(s.ml, 1)} ml`);
     rows.push(resultRow(R.scent, formatEuro(r.costs.scent), subs));
   }
-  rows.push(resultRow(R.glass, formatEuro(r.costs.glass)));
+  if (!input.noGlass) rows.push(resultRow(R.glass, formatEuro(r.costs.glass)));
   if (input.extras.length) rows.push(resultRow(R.extras, formatEuro(r.costs.extras)));
 
   const mlGiven = input.mode === 'ml' ? formatNumber(input.scents.reduce((a, s) => a + s.ml, 0), 1) : null;
@@ -48,7 +48,7 @@ export default function costResult() {
     ...rows);
 
   const metrics = h('div', { class: 'metrics' },
-    h('div', {}, h('div', { class: 'metric-label' }, R.weight), h('div', { class: 'metric-value' }, R.weightValue(formatNumber(input.totalWeightG, 1)))),
+    h('div', {}, h('div', { class: 'metric-label' }, R.weight), h('div', { class: 'metric-value' }, input.noGlass ? R.contentValue(formatNumber(r.innerG, 1)) : R.weightValue(formatNumber(input.totalWeightG, 1)))),
     h('div', {}, h('div', { class: 'metric-label' }, R.share), h('div', { class: 'metric-value' }, R.shareValue(formatPct(r.scentPct), r.scents.length ? mlGiven : null))));
 
   // Verkaufspreis: Zustand in settings, nur dieser Block wird aktualisiert
@@ -106,7 +106,7 @@ export default function costResult() {
 
   return h('section', { class: 'screen' },
     h('h1', { class: 'screen-title' }, R.title),
-    h('p', { class: 'subtitle' }, `${scentNames} im ${input.glass.name}.`),
+    h('p', { class: 'subtitle' }, input.noGlass ? `${scentNames}, ohne Glas.` : `${scentNames} im ${input.glass.name}.`),
     r.warnings.length > 0 && h('div', { class: 'stack' }, warnings(r.warnings)),
     card,
     metrics,

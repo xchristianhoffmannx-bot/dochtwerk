@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.5.1'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.6.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -36,6 +36,9 @@ export const T = {
     title: 'Kosten berechnen',
     sub: 'Die fertige Kerze auf die Waage stellen.',
     glass: 'Verwendetes Glas',
+    noGlass: 'Ohne Glas (z. B. Figur)',
+    waxAmount: 'Wachsmenge (g)',
+    waxAmountHint: 'Nur das Wachs, ohne Duftöl. Das Duftöl kommt dazu.',
     wax: 'Verwendetes Wachs',
     waxN: (n) => `Wachs ${n}`,
     addWax: '+ weiteres Wachs',
@@ -82,6 +85,7 @@ export const T = {
     extras: 'Docht & Zubehör',
     weight: 'Gesamtgewicht',
     weightValue: (g) => `${g} g mit Glas`,
+    contentValue: (g) => `${g} g Wachs und Duftöl`,
     share: 'Duftölanteil',
     shareValue: (p, ml) => (ml == null ? `${p} % vom Wachs` : `${p} % vom Wachs (aus ${ml} ml)`),
     savePhoto: 'Foto & Kerze speichern',

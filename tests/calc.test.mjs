@@ -160,3 +160,13 @@ test('Wachsmischung: Wachs ohne Duftöl, Prozent bezieht sich nur auf das beduft
   near(g.waxes[1].g, 100); near(g.waxes[0].g * 0.1, g.scentG); near(g.waxG + g.scentG, 270);
   assert.match(calcCost({ ...base, waxes: [{ ...wax, scented: false }, { ...raps, scented: false }], mode: 'percent', pct: 10, scents: [vanille] }).errors[0], /Duftöl bekommen/);
 });
+
+test('Figur ohne Glas: nur Wachsmenge, Duftöl kommt obendrauf, keine Glaskosten', () => {
+  const r = calcCost({ noGlass: true, waxAmountG: 100, wax, mode: 'percent', pct: 8, scents: [vanille], extras: [] });
+  assert.ok(r.ok);
+  near(r.waxG, 100); near(r.scentG, 8); near(r.innerG, 108); near(r.costs.glass, 0);
+  near(r.costs.total, r.costs.wax + r.costs.scent);
+  assert.match(calcCost({ noGlass: true, wax, mode: 'percent', pct: 0, scents: [] }).errors[0], /Wachsmenge/);
+  const m = calcCost({ noGlass: true, waxAmountG: 100, wax, mode: 'ml', scents: [{ ...vanille, ml: 10 }] });
+  near(m.waxG, 100); near(m.scentPct, m.scentG);
+});
