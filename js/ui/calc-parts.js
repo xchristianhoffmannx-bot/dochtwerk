@@ -32,14 +32,14 @@ export function waxSection(ctx, label) {
   const { state, draft, save, rebuild } = ctx;
   const wrap = h('div', { class: 'scent-block' }, waxField(ctx, label));
   const more = draft.moreWaxes;
-  // "Mit Duftöl" nur sinnvoll, wenn es mehrere Wachse gibt
+  // "Mit Duftöl" sofort sichtbar, sobald ein Wachs gewählt ist
   const scentedBox = (id, get, set) => {
     const box = h('input', { type: 'checkbox', id, class: 'check' });
     box.checked = get();
     box.addEventListener('change', () => { set(box.checked); save(); });
     return h('div', { class: 'extra-row' }, h('label', { for: id }, box, h('span', {}, C.waxScented)));
   };
-  if (more.length && draft.waxId) wrap.append(scentedBox('wax-scented-1', () => draft.firstScented !== false, (v) => { draft.firstScented = v; }));
+  if (draft.waxId) wrap.append(scentedBox('wax-scented-1', () => draft.firstScented !== false, (v) => { draft.firstScented = v; }));
   const chosen = more.filter((r) => r.waxId);
   let restEl = null;
   const byG = draft.waxUnit === 'g';
