@@ -3,11 +3,12 @@ import { parseDecimal } from './core/units.js';
 import { pricePerKg, pricePerMl, pricePerPiece } from './core/pricing.js';
 
 export const MAX_SCENTS = 4;
+export const MAX_WAXES = 3;
 export const blankRow = () => ({ scentId: '', share: '', ml: '' });
 
 // Zubehör-Vorauswahl = Auswahl der letzten Rechnung (Spec A2)
 export const emptyCostDraft = (state) => ({
-  glassId: '', waxId: '', mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
+  glassId: '', waxId: '', moreWaxes: [], mode: 'percent', totalWeight: '', pct: '', pctTouched: false,
   scents: [blankRow()],
   extras: Object.fromEntries(
     (state.drafts.lastExtras || [])
@@ -23,6 +24,7 @@ export const emptyPlanDraft = () => ({
 // kind: 'cost' | 'plan'. Legt den Entwurf an, falls er fehlt.
 export function getDraft(state, kind) {
   if (!state.drafts[kind]?.scents) state.drafts[kind] = kind === 'cost' ? emptyCostDraft(state) : emptyPlanDraft();
+  if (kind === 'cost' && !state.drafts.cost.moreWaxes) state.drafts.cost.moreWaxes = []; // Entwürfe aus älteren Versionen
   return state.drafts[kind];
 }
 
@@ -60,9 +62,15 @@ export function costInput(state, d) {
     if (qty <= 0) errors.push(`Die Menge für ${x.name} muss größer als 0 sein.`);
     extras.push({ extraId: x.id, name: x.name, qty, pricePerPiece: perPiece(x) });
   }
+  const waxOf = (x, sharePct) => ({ waxId: x.id, name: x.name, pricePerKg: pricePerKg(x.price, x.quantityKg), densityGml: x.densityGml, fragranceMaxPct: x.fragranceMaxPct, sharePct });
+  const more = w ? (d.moreWaxes || []).filter((r) => r.waxId).flatMap((r) => {
+    const x = state.waxes.find((y) => y.id === r.waxId);
+    return x ? [waxOf(x, read(r.share, `Anteil ${x.name}`, errors))] : []; // gelöschtes Wachs entfällt
+  }) : [];
   const input = {
     glass: g ? { name: g.name, emptyWeightG: g.emptyWeightG, price: perPiece(g) } : null,
-    wax: w ? { name: w.name, pricePerKg: pricePerKg(w.price, w.quantityKg), densityGml: w.densityGml, fragranceMaxPct: w.fragranceMaxPct } : null,
+    wax: w ? waxOf(w, null) : null,
+    waxes: w ? [waxOf(w, null), ...more] : [],
     mode: d.mode,
     totalWeightG: read(d.totalWeight, 'Gesamtgewicht', errors),
     pct: d.mode === 'ml' ? null : read(d.pct, 'Duftölmenge', errors),

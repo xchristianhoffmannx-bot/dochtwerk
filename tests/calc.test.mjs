@@ -117,3 +117,21 @@ test('Kein Duft: erlaubt, Duftkosten 0', () => {
   assert.ok(r.ok);
   near(r.waxG, 270); near(r.costs.scent, 0);
 });
+
+test('Wachsmischung: erstes Wachs bekommt den Rest, Kosten und Grenzwert', () => {
+  const raps = { name: 'Raps', pricePerKg: 10, fragranceMaxPct: 8 };
+  const r = calcCost({ ...base, wax: undefined, waxes: [wax, { ...raps, sharePct: 40 }], mode: 'percent', pct: 10, scents: [vanille] });
+  assert.ok(r.ok);
+  near(r.waxes[0].sharePct, 60); near(r.waxes[1].sharePct, 40);
+  near(r.waxes[0].g + r.waxes[1].g, r.waxG);
+  near(r.costs.wax, (r.waxes[0].g * 13.36 + r.waxes[1].g * 10) / 1000);
+  assert.match(r.warnings.join(' '), /Maximum von 8 % für Raps/);
+});
+
+test('Wachsmischung: Anteil fehlt -> Fehler, über 100 % -> normiert', () => {
+  const raps = { name: 'Raps', pricePerKg: 10 };
+  assert.match(calcCost({ ...base, waxes: [wax, raps], scents: [] }).errors[0], /Anteil für Raps/);
+  const r = calcCost({ ...base, waxes: [wax, { ...raps, sharePct: 70 }, { name: 'X', pricePerKg: 5, sharePct: 70 }], scents: [] });
+  near(r.waxes[0].sharePct, 0); near(r.waxes[1].sharePct + r.waxes[2].sharePct, 100);
+  assert.match(r.warnings.join(' '), /weiteren Wachse/);
+});

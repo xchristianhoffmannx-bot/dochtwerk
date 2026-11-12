@@ -5,7 +5,7 @@ import { h, field, fieldRow, selectInput, textInput } from './components.js';
 import { icon } from './icons.js';
 import { T } from '../texts.js';
 import { parseDecimal, formatPct } from '../core/units.js';
-import { MAX_SCENTS, blankRow } from '../calc-forms.js';
+import { MAX_SCENTS, MAX_WAXES, blankRow } from '../calc-forms.js';
 import { toInput } from '../materials.js';
 
 const C = T.cost;
@@ -25,6 +25,51 @@ export function waxField(ctx, label) {
     },
   });
   return field(label, select);
+}
+
+// Kostenrechner: bis zu drei Wachse. Das erste bekommt den Rest, die weiteren geben ihren Anteil an.
+export function waxSection(ctx, label) {
+  const { state, draft, save, rebuild } = ctx;
+  const wrap = h('div', { class: 'scent-block' }, waxField(ctx, label));
+  const more = draft.moreWaxes;
+  const chosen = more.filter((r) => r.waxId);
+  let restEl = null;
+  const updateRest = () => {
+    if (!restEl) return;
+    const others = chosen.reduce((a, r) => {
+      const v = parseDecimal(r.share);
+      return a + (Number.isFinite(v) && v > 0 ? v : 0);
+    }, 0);
+    restEl.textContent = C.rest(formatPct(Math.max(0, 100 - others)));
+  };
+  if (chosen.length) { restEl = h('p', { class: 'rest' }); wrap.append(restEl); }
+
+  more.forEach((row, i) => {
+    wrap.append(h('div', { class: 'scent-row' },
+      field(C.waxN(i + 2), selectInput({
+        id: `wax-${i + 2}`, value: row.waxId,
+        options: [['', C.none], ...state.waxes.map((w) => [w.id, w.name])],
+        onchange: (v) => { row.waxId = v; save(); rebuild(); },
+      })),
+      h('button', {
+        class: 'icon-btn', type: 'button', 'aria-label': C.removeWax,
+        onclick: () => { more.splice(i, 1); save(); rebuild(); },
+      }, icon('x'))));
+    if (row.waxId) {
+      wrap.append(field(C.share, textInput({
+        id: `wax-share-${i + 2}`, value: row.share,
+        oninput: (v) => { row.share = v; save(); updateRest(); },
+      })));
+    }
+  });
+  updateRest();
+  if (draft.waxId && more.length < MAX_WAXES - 1) {
+    wrap.append(h('button', {
+      class: 'link', type: 'button',
+      onclick: () => { more.push({ waxId: '', share: '' }); save(); rebuild(); },
+    }, C.addWax));
+  }
+  return wrap;
 }
 
 // Duft-Zeilen, je nach Modus mit ml-Feld, Anteil-Feld oder "Rest x %"

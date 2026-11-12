@@ -7,6 +7,7 @@ import { pickImage, processFile, UrlBag } from '../../photos.js';
 import { pickSource } from '../sheets.js';
 import { MAX_SCENTS, blankRow } from '../../calc-forms.js';
 import { missingForExport } from '../../core/candle.js';
+import { formatPct } from '../../core/units.js';
 import {
   KEEP, newManualCandle, candleFormValues, applyCandleForm,
   hasSide, orderedPhotos, setSide, removePhoto,
@@ -172,6 +173,7 @@ export default function candleDetail(id) {
     text('name', K.name.replace(' (optional)', ''), { inputmode: 'text' }),
     field(K.glass, glassSelect()),
     field(K.wax, waxSelect()),
+    work.waxMix && h('p', { class: 'hint' }, K.waxMix(work.waxMix.map((x) => `${x.name} ${formatPct(x.sharePct)} %`).join(', '))),
     scentBox,
     text('scentPct', K.scentPct),
     text('totalWeight', K.weight),

@@ -28,7 +28,8 @@ export default function costResult() {
   const grams = (g) => `${formatNumber(g, 1)} g`;
 
   const rows = [
-    resultRow(R.wax, formatEuro(r.costs.wax), [grams(r.waxG)]),
+    resultRow(R.wax, formatEuro(r.costs.wax), r.waxes.length === 1 ? [grams(r.waxG)]
+      : r.waxes.map((w) => `${w.name} ${formatPct(w.sharePct)} %: ${grams(w.g)} · ${formatEuro(w.cost)}`)),
   ];
   if (r.scents.length) {
     const subs = r.scents.length === 1

@@ -5,7 +5,7 @@ import { getState, commit } from '../../store.js';
 import { formatNumber } from '../../core/units.js';
 import { calcCost } from '../../core/calc-cost.js';
 import { getDraft, emptyCostDraft, costInput } from '../../calc-forms.js';
-import { waxField, scentSection, amountRow, keepScroll } from '../calc-parts.js';
+import { waxSection, scentSection, amountRow, keepScroll } from '../calc-parts.js';
 
 const C = T.cost;
 
@@ -62,7 +62,7 @@ export default function cost() {
     const msgs = h('div', { 'aria-live': 'polite' });
     form.replaceChildren(
       glassField(),
-      waxField(ctx, C.wax),
+      waxSection(ctx, C.wax),
       scentSection(ctx),
       field(C.weight, textInput({ id: 'weight', value: draft.totalWeight, oninput: (v) => { draft.totalWeight = v; save(); } })),
       amountRow(ctx),
