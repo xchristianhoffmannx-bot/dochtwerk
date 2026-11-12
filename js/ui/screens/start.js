@@ -1,6 +1,9 @@
 import { h } from '../components.js';
 import { icon } from '../icons.js';
 import { T } from '../../texts.js';
+import { getState, getPhoto } from '../../store.js';
+import { UrlBag } from '../../photos.js';
+import { galleryOrder, coverPhoto } from '../../candles.js';
 
 // Dekorative Kerze (statisches SVG, keine Nutzerdaten)
 const CANDLE = `<svg viewBox="0 0 80 100" aria-hidden="true">
@@ -28,11 +31,21 @@ export default function start() {
   const candle = h('span', { class: 'candle' });
   candle.innerHTML = CANDLE;
 
-  const gallery = h('a', { class: 'tile tile-wide', href: '#/galerie' },
-    h('div', {}, icon('images'), h('h2', { class: 'tile-title' }, S.gallery.title), h('p', { class: 'tile-desc' }, S.gallery.desc)),
-    candle);
+  // rechts das Foto der neuesten Kerze mit Foto, sonst die Zeichnung
+  const media = h('div', { class: 'tg-media' }, candle);
+  const bag = new UrlBag();
+  let gone = false;
+  const withPhoto = galleryOrder(getState().candles).find((c) => coverPhoto(c));
+  if (withPhoto) {
+    getPhoto(coverPhoto(withPhoto).id).then((rec) => {
+      if (rec && !gone) media.replaceChildren(h('img', { src: bag.make(rec.blob), alt: '' }));
+    }).catch(() => {});
+  }
+  const gallery = h('a', { class: 'tile tile-gallery', href: '#/galerie' },
+    h('div', { class: 'tg-text' }, icon('images'), h('h2', { class: 'tile-title' }, S.gallery.title), h('p', { class: 'tile-desc' }, S.gallery.desc)),
+    media);
 
-  return h('section', { class: 'screen' },
+  const screen = h('section', { class: 'screen' },
     h('h1', { class: 'screen-title', style: 'margin-top:28px' }, S.title),
     h('a', { class: 'tile tile-hero', href: '#/kosten' },
       h('div', {}, icon('calculator'), h('h2', { class: 'tile-title' }, S.cost.title), h('p', { class: 'tile-desc' }, S.cost.desc)),
@@ -40,4 +53,6 @@ export default function start() {
     h('div', { class: 'tile-grid' }, tile('#/material/glaeser', 'box', S.material), tile('#/rechner', 'droplets', S.plan)),
     gallery,
     h('div', { class: 'list' }, row('#/export', 'folder-down', S.export), row('#/daten', 'check', S.data)));
+  screen.destroy = () => { gone = true; bag.freeAll(); };
+  return screen;
 }

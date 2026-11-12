@@ -33,7 +33,7 @@ button { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 20px var(--gutter);
+  padding: 10px var(--gutter);
   border-bottom: 1px solid var(--border);
 }
 .brand-inner {
@@ -44,9 +44,10 @@ button { font: inherit; color: inherit; }
   align-items: center;
   gap: 18px;
 }
-.brand .icon { width: 26px; height: 26px; color: var(--accent); flex: none; margin: 0 6px; }
-.brand-name { font: clamp(24px, 6.9vw, 30px)/1.1 var(--font-serif); }
-.brand-tag { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.brand-inner { gap: 12px; }
+/* Logo in rundem Feld, Name daneben auf gleicher Höhe */
+.brand .icon { width: 22px; height: 22px; box-sizing: content-box; padding: 9px; border-radius: 14px; background: var(--result-bg); color: var(--accent); flex: none; }
+.brand-name { font: clamp(24px, 6.9vw, 28px)/1 var(--font-serif); }
 
 .screen {
   max-width: var(--content-max);

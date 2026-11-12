@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.8.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.8.1'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -6,7 +6,7 @@ export const T = {
   brand: { name: 'Dochtwerk', tagline: 'Dein kleines Kerzenatelier.' },
   back: 'Zurück',
   start: {
-    title: 'Dein Kerzenatelier',
+    title: 'Dein kleines Kerzenatelier',
     sub: '',
     cost: { title: 'Kosten berechnen', desc: 'Was kosten Wachs, Duft und Glas pro Kerze?' },
     material: { title: 'Materialien', desc: 'Gläser, Wachse, Düfte' },
