@@ -161,14 +161,14 @@ test('Wachsmischung: Wachs ohne Duftöl, Prozent bezieht sich nur auf das beduft
   assert.match(calcCost({ ...base, waxes: [{ ...wax, scented: false }, { ...raps, scented: false }], mode: 'percent', pct: 10, scents: [vanille] }).errors[0], /Duftöl bekommen/);
 });
 
-test('Figur ohne Glas: nur Wachsmenge, Duftöl kommt obendrauf, keine Glaskosten', () => {
-  const r = calcCost({ noGlass: true, waxAmountG: 100, wax, mode: 'percent', pct: 8, scents: [vanille], extras: [] });
+test('Figur ohne Glas: Gewicht enthält schon das Duftöl, keine Glaskosten', () => {
+  const r = calcCost({ noGlass: true, waxAmountG: 108, wax, mode: 'percent', pct: 8, scents: [vanille], extras: [] });
   assert.ok(r.ok);
   near(r.waxG, 100); near(r.scentG, 8); near(r.innerG, 108); near(r.costs.glass, 0);
   near(r.costs.total, r.costs.wax + r.costs.scent);
-  assert.match(calcCost({ noGlass: true, wax, mode: 'percent', pct: 0, scents: [] }).errors[0], /Wachsmenge/);
-  const m = calcCost({ noGlass: true, waxAmountG: 100, wax, mode: 'ml', scents: [{ ...vanille, ml: 10 }] });
-  near(m.waxG, 100); near(m.scentPct, m.scentG);
+  assert.match(calcCost({ noGlass: true, wax, mode: 'percent', pct: 0, scents: [] }).errors[0], /Gewicht der Figur/);
+  const m = calcCost({ noGlass: true, waxAmountG: 108, wax, mode: 'ml', scents: [{ ...vanille, ml: 8 / 0.95 }] });
+  near(m.waxG, 100); near(m.scentPct, 8);
 });
 
 test('Duftöl je Wachs: jedes Wachs mit eigenem Duft und eigener Konzentration', () => {
@@ -186,6 +186,6 @@ test('Duftöl je Wachs: jedes Wachs mit eigenem Duft und eigener Konzentration',
   near(g.waxes[1].g, 100); near(g.scents[0].g, 5); near(g.waxG + g.scentG, 270);
   // Figur ohne Glas
   const f = calcCost({ noGlass: true, waxAmountG: 100, waxes: [soja, raps], perWax: true, scents: sc, mode: 'percent' });
-  near(f.waxG, 100); near(f.scentG, 100 * 0.6 * 0.1 + 100 * 0.4 * 0.05);
+  near(f.waxG + f.scentG, 100); near(f.scentG, f.waxG * 0.6 * 0.1 + f.waxG * 0.4 * 0.05);
   assert.match(calcCost({ ...base, waxes: [{ ...soja, scent: { ...soja.scent, pct: null } }, raps], perWax: true, scents: sc }).errors[0], /Duftölmenge für Vanille/);
 });

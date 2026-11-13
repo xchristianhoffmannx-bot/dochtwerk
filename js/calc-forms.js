@@ -78,7 +78,7 @@ export function costInput(state, d) {
   }) : [];
   const input = {
     noGlass: !!d.noGlass,
-    waxAmountG: d.noGlass ? read(d.waxAmount, 'Wachsmenge', errors) : null,
+    waxAmountG: d.noGlass ? read(d.waxAmount, 'Gewicht der Figur', errors) : null,
     glass: g && !d.noGlass ? { name: g.name, emptyWeightG: g.emptyWeightG, price: perPiece(g) } : null,
     wax: w ? waxOf(w, null) : null,
     waxes: w ? [waxOf(w, null, d.firstScented !== false, scentOf(d.firstScentId, d.firstPct)), ...more] : [],

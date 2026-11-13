@@ -66,7 +66,7 @@ export default function cost() {
   }
 
   // Fehler dem Feld zuordnen: markieren und zum ersten fehlerhaften Feld springen
-  const FIELD_OF = [[/Gesamtgewicht/, 'weight'], [/Glas|Leergewicht/, 'glass'], [/Wachsmenge/, 'wax-amount'],
+  const FIELD_OF = [[/Gesamtgewicht/, 'weight'], [/Glas|Leergewicht/, 'glass'], [/Gewicht der Figur/, 'wax-amount'],
     [/Wähle ein Wachs/, 'wax'], [/Duftölmenge/, 'pct'], [/Anteil für|Menge in g für/, null]];
   function markInvalid(list) {
     let first = null;

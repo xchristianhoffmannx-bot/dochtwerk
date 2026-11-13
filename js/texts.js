@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.9.0'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
+export const APP_VERSION = '1.9.1'; // muss zu CACHE_VERSION in sw.js passen (tests/version.test.mjs)
 
 // Alle UI-Texte an einer Stelle (Spec 7).
 export const T = {
@@ -46,8 +46,8 @@ export const T = {
     pctOfWax: 'Duftölmenge (% vom Wachs)',
     withoutScent: 'Ohne Duftöl',
     noGlass: 'Ohne Glas (z. B. Figur)',
-    waxAmount: 'Wachsmenge (g)',
-    waxAmountHint: 'Nur das Wachs, ohne Duftöl. Das Duftöl kommt dazu.',
+    waxAmount: 'Gewicht der Figur (g)',
+    waxAmountHint: 'Gewicht der fertigen Kerze. Das Duftöl ist darin schon enthalten.',
     wax: 'Verwendetes Wachs',
     waxN: (n) => `Wachs ${n}`,
     addWax: '+ weiteres Wachs',
